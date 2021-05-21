@@ -335,30 +335,6 @@
     </sensor>
     <material>Gazebo/DarkGrey</material>
   </gazebo>
-  <link name="base_mic_front_left_link"/>
-  <joint name="base_mic_front_left_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.23182 0.03902 0.195"/>
-    <child link="base_mic_front_left_link"/>
-    <parent link="base_link"/>
-  </joint>
-  <link name="base_mic_front_right_link"/>
-  <joint name="base_mic_front_right_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.23182 -0.03902 0.195"/>
-    <child link="base_mic_front_right_link"/>
-    <parent link="base_link"/>
-  </joint>
-  <link name="base_mic_back_left_link"/>
-  <joint name="base_mic_back_left_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.1082 -0.0599 0.195"/>
-    <child link="base_mic_back_left_link"/>
-    <parent link="base_link"/>
-  </joint>
-  <link name="base_mic_back_right_link"/>
-  <joint name="base_mic_back_right_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.1082 -0.13789 0.195"/>
-    <child link="base_mic_back_right_link"/>
-    <parent link="base_link"/>
-  </joint>
   <!-- Base -->
   <link name="base_link">
     <inertial>
@@ -385,7 +361,13 @@
     <material>Gazebo/White</material>
   </gazebo>
   <!-- Base footprint -->
-  <link name="base_footprint"/>
+  <link name="base_footprint">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+       <mass value="100.0"/>
+       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+    </inertial>1
+  </link>
   <joint name="base_footprint_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0.0985"/>
     <child link="base_link"/>
