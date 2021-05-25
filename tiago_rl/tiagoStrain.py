@@ -5,11 +5,14 @@ import pybullet_data
 # configure simulator
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-p.setGravity(0,0,-10)
+p.setGravity(0, 0, -10)
 
 # set camera to view at scene
 p.resetDebugVisualizerCamera(1.6000027656555176, 89.6000747680664, -35.40000915527344, (0.0, 0.0, 0.0))
 p.configureDebugVisualizer(lightPosition=(30.0, 0.0, 20.0))
+
+# disable rendering of world axis and GUI elements
+p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # load objects
 planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
@@ -41,7 +44,7 @@ for jn, q in initialPositions:
     p.resetJointState(robId, name2Idx[jn], q)
 
 # step simulation
-for i in range (10000):
+for i in range(10000):
     p.stepSimulation()
     time.sleep(1./240.)
 p.disconnect()
