@@ -17,7 +17,7 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # load objects
 planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
-# cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0, 0.6])
+cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0.03, 0.6])
 
 # load robot
 robId = p.loadURDF("assets/boxBotStrain.urdf", basePosition=[0.0, 0.0, 0.27])
@@ -29,24 +29,31 @@ name2Idx = {key.decode(): value for (value, key) in [p.getJointInfo(robId, i)[:2
 initialPositions = [
     ['gripper_right_finger_joint', 0.045],
     ['gripper_left_finger_joint', 0.045],
-    ['torso_to_arm', 0.05]
+    ['torso_to_arm', 0.00]
 ]
 
 for jn, q in initialPositions:
     p.resetJointState(robId, name2Idx[jn], q)
 
-gripper_qs = np.linspace(0.045, 0, num=1250)
-torso_qs = np.linspace(0, 0.05, num=1250)
+
+numSteps = 500
+gripper_qs = np.linspace(0.045, 0.025, num=numSteps)
+torso_qs = np.linspace(0, 0.05, num=numSteps)
+
+# wait a bit for things to settle in simulation
+for i in range(100):
+    p.stepSimulation()
+    time.sleep(1./250.)
 
 # step simulation
 for i in range(10000):
     p.stepSimulation()
     time.sleep(1./250.)
 
-    if i < 1250:
+    if i < numSteps:
         p.resetJointState(robId, name2Idx['gripper_right_finger_joint'], gripper_qs[i])
         p.resetJointState(robId, name2Idx['gripper_left_finger_joint'], gripper_qs[i])
-        p.resetJointState(robId, name2Idx['torso_to_arm'], torso_qs[i])
+        # p.resetJointState(robId, name2Idx['torso_to_arm'], torso_qs[i])
 
     # c = p.getDebugVisualizerCamera()
     # print(f"{c[-2]}, {c[-4]}, {c[-3]}, {c[-1]}")
