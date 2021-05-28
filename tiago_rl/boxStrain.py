@@ -47,7 +47,6 @@ def updatePlot():
     curve.setData(forces_l)
     curve2.setData(forces_r)
     ptr += 1
-    app.processEvents()
 
 # configure simulator
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -88,7 +87,7 @@ gripper_qs = np.linspace(0.045, 0.01, num=numSteps)
 torso_qs = np.linspace(0, 0.05, num=numSteps)
 
 # wait a bit for things to settle in simulation
-for i in range(100):
+for i in range(300):
     p.stepSimulation()
     time.sleep(1./250.)
 
@@ -98,9 +97,9 @@ for i in range(10000):
     time.sleep(1./250.)
 
     contact_l = p.getContactPoints(bodyA=robId,
-                                 bodyB=cylId,
-                                 linkIndexA=robLink2Idx['gripper_left_finger'],
-                                 linkIndexB=objLink2Idx['cylinderLink'])
+                                   bodyB=cylId,
+                                   linkIndexA=robLink2Idx['gripper_left_finger'],
+                                   linkIndexB=objLink2Idx['cylinderLink'])
     force_l = calculateAverageForce(contact_l)
 
     contact_r = p.getContactPoints(bodyA=robId,
