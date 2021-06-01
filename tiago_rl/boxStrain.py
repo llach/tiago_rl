@@ -4,6 +4,9 @@ import pybullet_data
 import numpy as np
 import pybullet as p
 
+from pyqtgraph.Qt import QtGui, QtCore
+import pyqtgraph as pg0
+
 
 def getLinkToIdxDict(bodyId):
     d = {p.getBodyInfo(bodyId)[0].decode('UTF-8'): -1, }
@@ -21,10 +24,8 @@ def calculateAverageForce(contacts):
 
     # we might want to do impose additional checks upon contacts. for now, we just average everything
     f = [c[9] for c in contacts]
-    return np.mean(f)
+    return np.sum(f)
 
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
 
 app = QtGui.QApplication([])
 
