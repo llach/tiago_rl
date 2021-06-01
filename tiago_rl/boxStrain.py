@@ -4,8 +4,10 @@ import pybullet_data
 import numpy as np
 import pybullet as p
 
+from collections import deque
+
 from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg0
+import pyqtgraph as pg
 
 
 def getLinkToIdxDict(bodyId):
@@ -18,11 +20,11 @@ def getLinkToIdxDict(bodyId):
     return d
 
 
-def calculateAverageForce(contacts):
+def calculateForces(contacts):
     if not contacts:
         return 0.0
 
-    # we might want to do impose additional checks upon contacts. for now, we just average everything
+    # we might want to do impose additional checks upon contacts
     f = [c[9] for c in contacts]
     return np.sum(f)
 
@@ -92,6 +94,10 @@ for i in range(300):
     p.stepSimulation()
     time.sleep(1./250.)
 
+me = 10
+fl = deque(maxlen=me)
+fr = deque(maxlen=me)
+
 # step simulation
 for i in range(10000):
     p.stepSimulation()
@@ -101,13 +107,13 @@ for i in range(10000):
                                    bodyB=cylId,
                                    linkIndexA=robLink2Idx['gripper_left_finger'],
                                    linkIndexB=objLink2Idx['cylinderLink'])
-    force_l = calculateAverageForce(contact_l)
+    fl.append(calculateForces(contact_l))
 
     contact_r = p.getContactPoints(bodyA=robId,
                                    bodyB=cylId,
                                    linkIndexA=robLink2Idx['gripper_right_finger'],
                                    linkIndexB=objLink2Idx['cylinderLink'])
-    force_r = calculateAverageForce(contact_r)
+    fr.append(calculateForces(contact_r))
 
     if i < numSteps:
         p.setJointMotorControl2(bodyUniqueId=robId,
@@ -119,13 +125,9 @@ for i in range(10000):
                                 jointIndex=name2Idx['gripper_left_finger_joint'],
                                 controlMode=p.POSITION_CONTROL,
                                 targetPosition=gripper_qs[i])
-    forces_l.append(force_l)
-    forces_r.append(force_r)
+    forces_l.append(np.mean(fl))
+    forces_r.append(np.mean(fr))
     updatePlot()
-
-        # p.resetJointState(robId, name2Idx['gripper_right_finger_joint'], gripper_qs[i])
-        # p.resetJointState(robId, name2Idx['gripper_left_finger_joint'], gripper_qs[i])
-        # p.resetJointState(robId, name2Idx['torso_to_arm'], torso_qs[i])
 
     # c = p.getDebugVisualizerCamera()
     # print(f"{c[-2]}, {c[-4]}, {c[-3]}, {c[-1]}")
