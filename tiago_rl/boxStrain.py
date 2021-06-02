@@ -9,6 +9,8 @@ from collections import deque
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 
+import platform
+
 
 def getLinkToIdxDict(bodyId):
     d = {p.getBodyInfo(bodyId)[0].decode('UTF-8'): -1, }
@@ -50,6 +52,8 @@ def updatePlot():
     curve.setData(forces_l)
     curve2.setData(forces_r)
     ptr += 1
+    if platform.system() == 'Linux':
+        app.processEvents()
 
 # configure simulator
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -85,7 +89,7 @@ initialPositions = [
 for jn, q in initialPositions:
     p.resetJointState(robId, name2Idx[jn], q)
 
-numSteps = 500
+numSteps = 250
 gripper_qs = np.linspace(0.045, 0.01, num=numSteps)
 torso_qs = np.linspace(0, 0.05, num=numSteps)
 
