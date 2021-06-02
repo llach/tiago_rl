@@ -68,7 +68,7 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # load objects
 planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
-cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0.03, 0.6])
+cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0.02, 0.6])
 
 # load robot
 robId = p.loadURDF("assets/boxBotStrain.urdf", basePosition=[0.0, 0.0, 0.27])
@@ -89,23 +89,20 @@ initialPositions = [
 for jn, q in initialPositions:
     p.resetJointState(robId, name2Idx[jn], q)
 
-numSteps = 250
+numSteps = 70
 gripper_qs = np.linspace(0.045, 0.01, num=numSteps)
 torso_qs = np.linspace(0, 0.05, num=numSteps)
 
-# wait a bit for things to settle in simulation
-for i in range(300):
-    p.stepSimulation()
-    time.sleep(1./250.)
-
-me = 10
+me = 4
 fl = deque(maxlen=me)
 fr = deque(maxlen=me)
 
+
+waitSteps = 70
 # step simulation
-for i in range(10000):
+for i in range(300):
     p.stepSimulation()
-    time.sleep(1./250.)
+    time.sleep(1./140.)
 
     contact_l = p.getContactPoints(bodyA=robId,
                                    bodyB=cylId,
@@ -119,20 +116,34 @@ for i in range(10000):
                                    linkIndexB=objLink2Idx['cylinderLink'])
     fr.append(calculateForces(contact_r))
 
-    if i < numSteps:
+    forces_l.append(np.mean(fl) / 100 + np.random.normal(0, 0.0077))
+    forces_r.append(np.mean(fr) / 100 + np.random.normal(0, 0.0077))
+
+    if waitSteps < i < waitSteps+numSteps:
+        n = i-waitSteps
         p.setJointMotorControl2(bodyUniqueId=robId,
                                 jointIndex=name2Idx['gripper_right_finger_joint'],
                                 controlMode=p.POSITION_CONTROL,
-                                targetPosition=gripper_qs[i])
+                                targetPosition=gripper_qs[n])
 
         p.setJointMotorControl2(bodyUniqueId=robId,
                                 jointIndex=name2Idx['gripper_left_finger_joint'],
                                 controlMode=p.POSITION_CONTROL,
-                                targetPosition=gripper_qs[i])
-    forces_l.append(np.mean(fl))
-    forces_r.append(np.mean(fr))
+                                targetPosition=gripper_qs[n])
+
     updatePlot()
 
     # c = p.getDebugVisualizerCamera()
     # print(f"{c[-2]}, {c[-4]}, {c[-3]}, {c[-1]}")
+
+# use this to store force values to pickle
+import os
+import pickle
+
+with open('{}/simClose.pkl'.format(os.environ['HOME']), 'wb') as f:
+    pickle.dump({
+        'forces_l': forces_l,
+        'forces_r': forces_r
+    }, f, protocol=2)
+
 p.disconnect()
