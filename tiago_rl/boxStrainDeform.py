@@ -59,7 +59,7 @@ forces_r = []
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) # allows loading of pybullet_data URDFs
 p.setGravity(0, 0, -10)
-# p.resetSimulation(p.RESET_USE_DEFORMABLE_WORLD)
+p.resetSimulation(p.RESET_USE_DEFORMABLE_WORLD)
 
 # set camera to view at scene
 p.resetDebugVisualizerCamera(1.1823151111602783, 120.5228271484375, -68.42454528808594, (-0.2751278877258301, -0.15310688316822052, -0.27969369292259216))
@@ -139,7 +139,7 @@ fr = deque(maxlen=me)
 
 waitSteps = 140
 # step simulation
-for i in range(140*2):
+for i in range(140*10):
     p.stepSimulation()
     time.sleep(1./140.)
 
