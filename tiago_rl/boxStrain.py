@@ -98,9 +98,9 @@ fl = deque(maxlen=me)
 fr = deque(maxlen=me)
 
 
-waitSteps = 70
+waitSteps = 200
 # step simulation
-for i in range(300):
+for i in range(800):
     p.stepSimulation()
     time.sleep(1./140.)
 
