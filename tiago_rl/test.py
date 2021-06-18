@@ -16,13 +16,6 @@ planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
 cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0.02, 0.6])
 robId = p.loadURDF("./assets/objects/box.urdf", basePosition=[0.0, 0.0, 0.27])
 
-# this had no effect
-# p.changeDynamics(planeId, -1,
-#                  lateralFriction=1,
-#                  spinningFriction=1,
-#                  rollingFriction=1,
-#                  restitution=0.5)
-
 for _ in range(10000):
     p.stepSimulation()
     time.sleep(1. / 240.)
