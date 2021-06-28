@@ -17,7 +17,7 @@ class BulletRobotEnv(gym.Env):
     This code's starting point was the MuJoCo-based robotics environment from gym:
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
-    def __init__(self, initial_state, n_actions, dt=1./240., render=False):
+    def __init__(self, initial_state, n_actions, joints, dt=1./240., render=False):
 
         if render:
             self.client_id = p.connect(p.SHARED_MEMORY)
@@ -31,14 +31,15 @@ class BulletRobotEnv(gym.Env):
             self.client_id = p.connect(p.DIRECT)
 
         self.dt = dt
+        self.joints = joints
+        self.initial_state = list(zip(self.joints, initial_state))
 
-        # will be set by child environment
+        # needs to be set by child environment
         self.robotId = None  # sim ID of robot model
         self.jn2Idx = None  # dict of joint names to model indices
 
         self.seed()
         self._env_setup(initial_state=initial_state)
-        self.initial_state = initial_state
 
         # self.goal = self._sample_goal()
         obs = self._get_obs()
@@ -114,20 +115,11 @@ class BulletRobotEnv(gym.Env):
 
         return True
 
-    def _set_state(self, state):
-        if self.robotId:
-            for jn, q in state:
-                self._set_joint_pos(self.jn2Idx[jn], q)
-
-    def _set_joint_pos(self, joint_idx, joint_pos):
-        if self.robotId:
-            p.resetJointState(self.robotId, joint_idx, joint_pos)
-
     def _env_setup(self, initial_state):
         """Initial configuration of the environment. Can be used to configure initial state
         and extract information from the simulation.
         """
-        self._set_state(initial_state)
+        self._reset_state(initial_state)
 
     def _step_sim(self):
         """Steps one timestep.
@@ -148,15 +140,14 @@ class BulletRobotEnv(gym.Env):
     def _set_action(self, action):
         """Applies the given action to the simulation.
         """
-        raise NotImplementedError()
+        if self.joints:
+            for jn, des_q in zip(self.joints, action):
+                self._set_desired_q(self.jn2Idx[jn], des_q)
+        else:
+            print("Environment has no joints specified!")
 
     def _is_success(self):
         """Indicates whether or not the achieved goal successfully achieved the desired goal.
-        """
-        raise NotImplementedError()
-
-    def _sample_goal(self):
-        """Samples a new goal and returns it.
         """
         raise NotImplementedError()
 
@@ -165,3 +156,21 @@ class BulletRobotEnv(gym.Env):
         to enforce additional constraints on the simulation state.
         """
         pass
+
+    # PyBullet Wrapper
+    # ----------------------------
+
+    def _reset_state(self, state):
+        if self.robotId:
+            for jn, q in state:
+                self._set_joint_pos(self.jn2Idx[jn], q)
+
+    def _set_joint_pos(self, joint_idx, joint_pos):
+        if self.robotId:
+            p.resetJointState(self.robotId, joint_idx, joint_pos)
+
+    def _set_desired_q(self, joint_idx, des_q):
+        p.setJointMotorControl2(bodyUniqueId=self.robotId,
+                                jointIndex=joint_idx,
+                                controlMode=p.POSITION_CONTROL,
+                                targetPosition=des_q)

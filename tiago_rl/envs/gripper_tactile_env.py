@@ -8,17 +8,12 @@ from tiago_rl.envs.utils import link_to_idx, joint_to_idx
 class GripperTactileEnv(BulletRobotEnv):
 
     def __init__(self, initial_state=None, dt=1./240., render=False):
-        initial_state = initial_state or [
-            ['gripper_right_finger_joint', 0.045],
-            ['gripper_left_finger_joint', 0.045],
-            ['torso_to_arm', 0.00]
-        ]
-
         BulletRobotEnv.__init__(self,
                                 dt=dt,
                                 n_actions=2, # 3 if torso is included
                                 render=render,
-                                initial_state=initial_state)
+                                joints = ['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
+                                initial_state=initial_state or [0.045, 0.045, 0.00])
 
         if render:
             # focus grasping scene
@@ -53,9 +48,6 @@ class GripperTactileEnv(BulletRobotEnv):
         return {
             'observation': obs
         }
-
-    def _set_action(self, action):
-        pass
 
     def _is_success(self):
         return False
