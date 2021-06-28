@@ -16,11 +16,11 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # load objects
 planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
-boxId = p.loadURDF("./assets/objects/box.urdf", basePosition=[0.7, 0, 0.27])
-cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.73, 0.07, 0.6])
+boxId = p.loadURDF("./assets/objects/table.urdf", basePosition=[0.7, 0, 0.27])
+cylId = p.loadURDF("./assets/objects/object.urdf", basePosition=[0.73, 0.07, 0.6])
 
 # load robot
-robId = p.loadURDF("./assets/tiago_strain.urdf")
+robId = p.loadURDF("./assets/tiago_tactile.urdf")
 
 # create jointName to jointIndex mapping
 name2Idx = {key.decode(): value for (value, key) in [p.getJointInfo(robId, i)[:2] for i in range(p.getNumJoints(robId))]}

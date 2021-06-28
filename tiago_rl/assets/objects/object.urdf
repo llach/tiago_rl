@@ -1,9 +1,11 @@
 <?xml version="1.0" ?>
-<robot name="cylinder">
-    <link name="cylinderLink">
+<robot name="object">
+    <link name="objectLink">
         <contact>
           <lateral_friction value="1.0"/>
-          <rolling_friction value="0.0"/>
+          <rolling_friction value="1.0"/>
+          <stiffness value="3000"/>
+          <damping value="500"/>
         </contact>
         <inertial>
           <origin rpy="0 0 0" xyz="0 0 0"/>

@@ -68,10 +68,10 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # load objects
 planeId = p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
-cylId = p.loadURDF("./assets/objects/cylinder.urdf", basePosition=[0.04, 0.02, 0.6])
+cylId = p.loadURDF("../tiago_rl/assets/objects/object.urdf", basePosition=[0.04, 0.02, 0.6])
 
 # load robot
-robId = p.loadURDF("assets/boxBotStrain.urdf", basePosition=[0.0, 0.0, 0.27])
+robId = p.loadURDF("assets/gripper_tactile.urdf", basePosition=[0.0, 0.0, 0.27])
 
 # create jointName to jointIndex mapping
 name2Idx = {key.decode(): value for (value, key) in [p.getJointInfo(robId, i)[:2] for i in range(p.getNumJoints(robId))]}
@@ -90,13 +90,12 @@ for jn, q in initialPositions:
     p.resetJointState(robId, name2Idx[jn], q)
 
 numSteps = 70
-gripper_qs = np.linspace(0.045, 0.01, num=numSteps)
+gripper_qs = np.linspace(0.045, 0.00, num=numSteps)
 torso_qs = np.linspace(0, 0.05, num=numSteps)
 
 me = 4
 fl = deque(maxlen=me)
 fr = deque(maxlen=me)
-
 
 waitSteps = 100
 # step simulation
@@ -107,13 +106,13 @@ for i in range(400):
     contact_l = p.getContactPoints(bodyA=robId,
                                    bodyB=cylId,
                                    linkIndexA=robLink2Idx['gripper_left_finger'],
-                                   linkIndexB=objLink2Idx['cylinderLink'])
+                                   linkIndexB=objLink2Idx['objectLink'])
     fl.append(calculateForces(contact_l))
 
     contact_r = p.getContactPoints(bodyA=robId,
                                    bodyB=cylId,
                                    linkIndexA=robLink2Idx['gripper_right_finger'],
-                                   linkIndexB=objLink2Idx['cylinderLink'])
+                                   linkIndexB=objLink2Idx['objectLink'])
     fr.append(calculateForces(contact_r))
 
     forces_l.append(np.mean(fl) / 100 + np.random.normal(0, 0.0077))

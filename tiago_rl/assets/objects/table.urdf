@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
-<robot name="box">
-  <link name="boxLink">
+<robot name="table">
+  <link name="tableLink">
     <contact>
-      <lateral_friction value="1.0"/>
-      <rolling_friction value="10.0"/>
-      <contact_cfm value="0.0"/>
-      <contact_erp value="1.0"/>
+        <restitution value="0.5" />
+      <rolling_friction value="0.001"/>
+      <spinning_friction value="0.001"/>
+      <stiffness value="3.0" />
     </contact>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
