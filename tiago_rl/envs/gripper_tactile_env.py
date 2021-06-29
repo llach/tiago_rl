@@ -66,7 +66,7 @@ class GripperTactileEnv(BulletRobotEnv):
                                        self.object_link_to_index['objectLink']))
             self.force_buffer_l.append(self._get_contact_force(self.robotId, self.objectId,
                                        self.robot_link_to_index['gripper_left_finger'],
-                                       self.object_link_to_index['objectLink']),)
+                                       self.object_link_to_index['objectLink']))
 
             # create force array
             forces = np.array([
@@ -83,4 +83,4 @@ class GripperTactileEnv(BulletRobotEnv):
         return False
 
     def _transform_forces(self, force):
-        return force / 100 + np.random.normal(self.force_noise_mu, self.force_noise_sigma)
+        return (force / 100) + np.random.normal(self.force_noise_mu, self.force_noise_sigma)

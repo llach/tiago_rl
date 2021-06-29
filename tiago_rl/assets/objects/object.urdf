@@ -4,8 +4,8 @@
         <contact>
           <lateral_friction value="1.0"/>
           <rolling_friction value="1.0"/>
-          <stiffness value="3000"/>
-          <damping value="500"/>
+          <stiffness value="30000"/>
+          <damping value="1000"/>
         </contact>
         <inertial>
           <origin rpy="0 0 0" xyz="0 0 0"/>

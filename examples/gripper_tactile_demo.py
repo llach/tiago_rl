@@ -38,7 +38,7 @@ def updatePlot():
 # Environment setup
 # ----------------------------
 
-env = GripperTactileEnv(dt=1./240., render=True)
+env = GripperTactileEnv(dt=1./240., render=True, force_noise_sigma=0.0077)
 
 waitSteps = 50
 trajSteps = 140
@@ -57,9 +57,9 @@ for i in range(300):
         o, _, _, _ = env.step(env.desired_pos)
 
     obs = o['observation']
-    print(obs)
+    print('obs', obs)
 
-    f = obs[2:]
+    f = obs[-2:]
     pos = obs[:2]
 
     forces_r.append(f[0])
