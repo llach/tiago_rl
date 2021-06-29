@@ -18,9 +18,9 @@ class BulletRobotEnv(gym.Env):
     This code's starting point was the MuJoCo-based robotics environment from gym:
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
-    def __init__(self, initial_state, n_actions, joints, dt=1./240., render=False):
+    def __init__(self, initial_state, n_actions, joints, dt=1./240., show_gui=False):
 
-        if render:
+        if show_gui:
             self.client_id = p.connect(p.SHARED_MEMORY)
 
             if self.client_id < 0:
@@ -30,6 +30,7 @@ class BulletRobotEnv(gym.Env):
             p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
         else:
             self.client_id = p.connect(p.DIRECT)
+        self.show_gui = show_gui
 
         self.dt = dt
         self.joints = joints
@@ -94,9 +95,10 @@ class BulletRobotEnv(gym.Env):
         obs = self._get_obs()
         return obs
 
-    def render(self, mode="rgb_array", width=DEFAULT_SIZE, height=DEFAULT_SIZE):
-        if mode != "rgb_array":
-            return np.array([])
+    def render(self, width=DEFAULT_SIZE, height=DEFAULT_SIZE):
+        """Render RGB Array from scene. Based on:
+        https://github.com/robotology-playground/pybullet-robot-envs/blob/master/pybullet_robot_envs/envs/icub_envs/icub_reach_gym_env.py#L267
+        """
 
         view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=self.camera_target_position,
                                                           distance=self.camera_distance,
@@ -105,8 +107,10 @@ class BulletRobotEnv(gym.Env):
                                                           roll=0,
                                                           upAxisIndex=2)
 
-        proj_matrix = p.computeProjectionMatrixFOV(fov=60, aspect=float(width) / height,
-                                                   nearVal=0.1, farVal=100.0)
+        proj_matrix = p.computeProjectionMatrixFOV(fov=60,
+                                                   nearVal=0.1,
+                                                   farVal=100.0,
+                                                   aspect=float(width) / height)
 
         (_, _, px, _, _) = p.getCameraImage(width=width, height=height,
                                             viewMatrix=view_matrix,

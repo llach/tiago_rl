@@ -26,7 +26,7 @@ curve2 = p1.plot(pen='r')
 forces_l = []
 forces_r = []
 
-def updatePlot():
+def update_plot():
     global curve, curve2, forces_l, forces_r, p1
 
     curve.setData(forces_l)
@@ -38,7 +38,8 @@ def updatePlot():
 # Environment setup
 # ----------------------------
 
-env = GripperTactileEnv(dt=1./240., render=False, force_noise_sigma=0.0077)
+show_gui = False
+env = GripperTactileEnv(dt=1./240., show_gui=show_gui, force_noise_sigma=0.0077)
 
 waitSteps = 50
 trajSteps = 140
@@ -49,26 +50,31 @@ torso_qs = np.linspace(0, 0.05, num=trajSteps)
 # ----------------------------
 pos = [0.045, 0.045]
 
-for i in range(100):
+for i in range(300):
     if waitSteps < i < waitSteps+trajSteps:
         n = i-waitSteps
         o, _, _, _ = env.step(2*[gripper_qs[n]])
     else:
         o, _, _, _ = env.step(env.desired_pos)
 
+    # extract information from observations.
+    # see GripperTactileEnv._get_obs() for reference.
     obs = o['observation']
+    f = obs[-2:]
+    pos = obs[:2]
 
-    # test rendering
-    if i == 50:
+    if show_gui:
+        forces_r.append(f[0])
+        forces_l.append(f[1])
+
+        curve.setData(forces_l)
+        curve2.setData(forces_r)
+
+        if platform.system() == 'Linux':
+            app.processEvents()
+    elif i == 110:
+        # test rendering if not showing GUI
         import matplotlib.pyplot as plt
 
         plt.imshow(env.render(height=1080, width=1920))
         plt.show()
-
-    f = obs[-2:]
-    pos = obs[:2]
-
-    forces_r.append(f[0])
-    forces_l.append(f[1])
-
-    updatePlot()

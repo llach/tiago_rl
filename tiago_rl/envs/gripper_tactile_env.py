@@ -9,7 +9,7 @@ from tiago_rl.envs.utils import link_to_idx, joint_to_idx
 
 class GripperTactileEnv(BulletRobotEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., render=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
 
         self.force_smoothing = force_smoothing
         self.force_noise_mu = force_noise_mu
@@ -21,7 +21,7 @@ class GripperTactileEnv(BulletRobotEnv):
         BulletRobotEnv.__init__(self,
                                 dt=dt,
                                 n_actions=2, # 3 if torso is included
-                                render=render,
+                                show_gui=show_gui,
                                 joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
                                 initial_state=initial_state or [0.045, 0.045])
 
@@ -31,7 +31,7 @@ class GripperTactileEnv(BulletRobotEnv):
         self.camera_pitch = -68.42454528808594
         self.camera_target_position = (-0.2751278877258301, -0.15310688316822052, -0.27969369292259216)
 
-        if render:
+        if show_gui:
             # focus grasping scene
             p.resetDebugVisualizerCamera(self.camera_distance,
                                          self.camera_yaw,
