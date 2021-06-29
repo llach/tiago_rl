@@ -11,6 +11,7 @@ import pybullet_data
 
 DEFAULT_SIZE = 500
 
+
 class BulletRobotEnv(gym.Env):
     """
     Superclass for PyBullet-based gym environments for TIAGo.
@@ -210,8 +211,7 @@ class BulletRobotEnv(gym.Env):
         pos = []
         vel = []
 
-        for jn in self.joints:
-            js = p.getJointState(self.robotId, self.jn2Idx[jn])
+        for js in p.getJointStates(self.robotId, [self.jn2Idx[jn] for jn in self.joints]):
             pos.append(js[0])
             vel.append(js[1])
         return pos, vel
