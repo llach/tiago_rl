@@ -32,17 +32,22 @@ class BulletRobotEnv(gym.Env):
 
         self.dt = dt
         self.joints = joints
+        self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
+
+        # current state
+        self.current_pos = initial_state
+        self.current_vel = self.num_joints*[0.0]
+
+        self.desired_pos = self.current_pos
 
         # needs to be set by child environment
         self.robotId = None  # sim ID of robot model
         self.jn2Idx = None  # dict of joint names to model indices
 
         self.seed()
-        self._env_setup(initial_state=initial_state)
+        obs = self.reset()
 
-        # self.goal = self._sample_goal()
-        obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
@@ -63,11 +68,11 @@ class BulletRobotEnv(gym.Env):
         self._step_callback()
 
         obs = self._get_obs()
+        reward = self._compute_reward()
         done = False
         info = {
             'is_success': self._is_success(),
         }
-        reward = self._compute_reward()
         return obs, reward, done, info
 
     def reset(self):
@@ -127,6 +132,17 @@ class BulletRobotEnv(gym.Env):
         p.stepSimulation()
         time.sleep(self.dt)
 
+    def _set_action(self, action):
+        """Applies the given action to the simulation.
+        """
+        self.desired_pos = action
+
+        if self.joints:
+            for jn, des_q in zip(self.joints, action):
+                self._set_desired_q(self.jn2Idx[jn], des_q)
+        else:
+            print("Environment has no joints specified!")
+
     def _compute_reward(self):
         """Returns the reward for this timestep.
         """
@@ -136,15 +152,6 @@ class BulletRobotEnv(gym.Env):
         """Returns the observation.
         """
         raise NotImplementedError()
-
-    def _set_action(self, action):
-        """Applies the given action to the simulation.
-        """
-        if self.joints:
-            for jn, des_q in zip(self.joints, action):
-                self._set_desired_q(self.jn2Idx[jn], des_q)
-        else:
-            print("Environment has no joints specified!")
 
     def _is_success(self):
         """Indicates whether or not the achieved goal successfully achieved the desired goal.
@@ -156,6 +163,11 @@ class BulletRobotEnv(gym.Env):
         to enforce additional constraints on the simulation state.
         """
         pass
+
+    def _transform_forces(self, force):
+        """Transformations to forces can be applied here (e.g. add noise,
+        """
+        return force
 
     # PyBullet Wrapper
     # ----------------------------
@@ -174,3 +186,32 @@ class BulletRobotEnv(gym.Env):
                                 jointIndex=joint_idx,
                                 controlMode=p.POSITION_CONTROL,
                                 targetPosition=des_q)
+
+    def _calculate_force(self, contacts):
+        if not contacts:
+            return 0.0
+
+        # we might want to do impose additional checks upon contacts
+        f = [c[9] for c in contacts]
+        return np.sum(f)
+
+    def _get_contact_force(self, bodyA, bodyB, linkA, linkB):
+        if self.robotId:
+            cps = p.getContactPoints(bodyA=bodyA,
+                                     bodyB=bodyB,
+                                     linkIndexA=linkA,
+                                     linkIndexB=linkB)
+            f_raw = self._calculate_force(cps)
+            return self._transform_forces(f_raw)
+        else:
+            return 0.0
+
+    def _get_joint_states(self):
+        pos = []
+        vel = []
+
+        for jn in self.joints:
+            js = p.getJointState(self.robotId, self.jn2Idx[jn])
+            pos.append(js[0])
+            vel.append(js[1])
+        return pos, vel
