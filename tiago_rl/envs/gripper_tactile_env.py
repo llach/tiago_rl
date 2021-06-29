@@ -10,7 +10,6 @@ from tiago_rl.envs.utils import link_to_idx, joint_to_idx
 class GripperTactileEnv(BulletRobotEnv):
 
     def __init__(self, initial_state=None, dt=1./240., render=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
-        self.objectId = None
 
         self.force_smoothing = force_smoothing
         self.force_noise_mu = force_noise_mu
@@ -26,10 +25,18 @@ class GripperTactileEnv(BulletRobotEnv):
                                 joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
                                 initial_state=initial_state or [0.045, 0.045])
 
+        # overwrite superclass defaults
+        self.camera_distance = 1.1823151111602783
+        self.camera_yaw = 120.5228271484375
+        self.camera_pitch = -68.42454528808594
+        self.camera_target_position = (-0.2751278877258301, -0.15310688316822052, -0.27969369292259216)
+
         if render:
             # focus grasping scene
-            p.resetDebugVisualizerCamera(1.1823151111602783, 120.5228271484375, -68.42454528808594,
-                                         (-0.2751278877258301, -0.15310688316822052, -0.27969369292259216))
+            p.resetDebugVisualizerCamera(self.camera_distance,
+                                         self.camera_yaw,
+                                         self.camera_pitch,
+                                         self.camera_target_position)
 
         self.reset()
 
@@ -50,9 +57,8 @@ class GripperTactileEnv(BulletRobotEnv):
         # joint name to joint index mapping
         self.jn2Idx = joint_to_idx(self.robotId)
 
-    def _compute_reward(self):
-        # todo add reward calculation
-        return 0
+    def _transform_forces(self, force):
+        return (force / 100) + np.random.normal(self.force_noise_mu, self.force_noise_sigma)
 
     def _get_obs(self):
         pos, vel = self._get_joint_states()
@@ -82,5 +88,6 @@ class GripperTactileEnv(BulletRobotEnv):
     def _is_success(self):
         return False
 
-    def _transform_forces(self, force):
-        return (force / 100) + np.random.normal(self.force_noise_mu, self.force_noise_sigma)
+    def _compute_reward(self):
+        # todo add reward calculation
+        return 0

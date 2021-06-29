@@ -45,6 +45,13 @@ class BulletRobotEnv(gym.Env):
         # needs to be set by child environment
         self.robotId = None  # sim ID of robot model
         self.jn2Idx = None  # dict of joint names to model indices
+        self.objectId = None # sim ID of grasp object
+
+        # PyBullet camera settings
+        self.camera_distance = 1.5
+        self.camera_yaw = 180.0
+        self.camera_pitch = -40.0
+        self.camera_target_position = (0.0, 0.0, 0.0)
 
         self.seed()
         obs = self.reset()
@@ -72,7 +79,7 @@ class BulletRobotEnv(gym.Env):
         reward = self._compute_reward()
         done = False
         info = {
-            'is_success': self._is_success(), # todo is this needed by baselines or why do we include it?
+            'is_success': self._is_success(), # used by the HER algorithm
         }
         return obs, reward, done, info
 
@@ -87,9 +94,30 @@ class BulletRobotEnv(gym.Env):
         obs = self._get_obs()
         return obs
 
-    def render(self, width=DEFAULT_SIZE, height=DEFAULT_SIZE):
-        # TODO render RGB image and return it
-        return np.array([])
+    def render(self, mode="rgb_array", width=DEFAULT_SIZE, height=DEFAULT_SIZE):
+        if mode != "rgb_array":
+            return np.array([])
+
+        view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=self.camera_target_position,
+                                                          distance=self.camera_distance,
+                                                          yaw=self.camera_yaw,
+                                                          pitch=self.camera_pitch,
+                                                          roll=0,
+                                                          upAxisIndex=2)
+
+        proj_matrix = p.computeProjectionMatrixFOV(fov=60, aspect=float(width) / height,
+                                                   nearVal=0.1, farVal=100.0)
+
+        (_, _, px, _, _) = p.getCameraImage(width=width, height=height,
+                                            viewMatrix=view_matrix,
+                                            projectionMatrix=proj_matrix,
+                                            renderer=p.ER_BULLET_HARDWARE_OPENGL)
+
+        rgb_array = np.array(px, dtype=np.uint8)
+        rgb_array = np.reshape(rgb_array, (height, width, 4))
+
+        rgb_array = rgb_array[:, :, :3]
+        return rgb_array
 
     # Extension methods
     # ----------------------------

@@ -38,7 +38,7 @@ def updatePlot():
 # Environment setup
 # ----------------------------
 
-env = GripperTactileEnv(dt=1./240., render=True, force_noise_sigma=0.0077)
+env = GripperTactileEnv(dt=1./240., render=False, force_noise_sigma=0.0077)
 
 waitSteps = 50
 trajSteps = 140
@@ -49,7 +49,7 @@ torso_qs = np.linspace(0, 0.05, num=trajSteps)
 # ----------------------------
 pos = [0.045, 0.045]
 
-for i in range(300):
+for i in range(100):
     if waitSteps < i < waitSteps+trajSteps:
         n = i-waitSteps
         o, _, _, _ = env.step(2*[gripper_qs[n]])
@@ -57,7 +57,13 @@ for i in range(300):
         o, _, _, _ = env.step(env.desired_pos)
 
     obs = o['observation']
-    print('obs', obs)
+
+    # test rendering
+    if i == 50:
+        import matplotlib.pyplot as plt
+
+        plt.imshow(env.render(height=1080, width=1920))
+        plt.show()
 
     f = obs[-2:]
     pos = obs[:2]
