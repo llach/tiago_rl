@@ -71,7 +71,7 @@ class BulletRobotEnv(gym.Env):
         reward = self._compute_reward()
         done = False
         info = {
-            'is_success': self._is_success(),
+            'is_success': self._is_success(), # todo is this needed by baselines or why do we include it?
         }
         return obs, reward, done, info
 

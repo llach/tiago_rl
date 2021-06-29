@@ -51,10 +51,10 @@ class GripperTactileEnv(BulletRobotEnv):
         self.jn2Idx = joint_to_idx(self.robotId)
 
     def _compute_reward(self):
+        # todo add reward calculation
         return 0
 
     def _get_obs(self):
-        # TODO add gripper position and velocity to observation space
         pos, vel = self._get_joint_states()
 
         if not self.objectId:
