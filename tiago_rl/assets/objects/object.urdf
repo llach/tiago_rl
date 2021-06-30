@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <robot name="object">
-    <link name="objectLink">
+    <link name="object_link">
         <contact>
           <lateral_friction value="1.0"/>
           <rolling_friction value="1.0"/>

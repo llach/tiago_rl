@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <robot name="table">
-  <link name="tableLink">
+  <link name="table_link">
     <contact>
         <restitution value="0.5" />
       <rolling_friction value="0.001"/>
