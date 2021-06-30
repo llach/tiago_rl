@@ -94,6 +94,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
                                     object_model="objects/object.urdf",
                                     object_pos=[0.04, 0.02, 0.6])
 
+
 class TIAGoTactileEnv(LoadCellTactileEnv):
 
     def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
