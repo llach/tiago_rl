@@ -6,13 +6,13 @@ from tiago_rl.envs import BulletRobotEnv
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=0.0077,
-                 force_smoothing=4, cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
+    def __init__(self, joints, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None,
+                 force_smoothing=None, cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
                  robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
-        self.force_smoothing = force_smoothing
-        self.force_noise_mu = force_noise_mu
-        self.force_noise_sigma = force_noise_sigma
+        self.force_smoothing = force_smoothing or 4
+        self.force_noise_mu = force_noise_mu or 0.0
+        self.force_noise_sigma = force_noise_sigma or 0.0077
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
@@ -75,7 +75,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
 class GripperTactileEnv(LoadCellTactileEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None):
 
         LoadCellTactileEnv.__init__(self,
                                     dt=dt,
@@ -97,7 +97,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
 
 class TIAGoTactileEnv(LoadCellTactileEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None):
 
         joints = [
             'torso_lift_joint',
