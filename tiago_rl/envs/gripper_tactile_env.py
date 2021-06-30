@@ -48,11 +48,11 @@ class LoadCellTactileEnv(BulletRobotEnv):
         else:
             # get current forces
             self.force_buffer_r.append(self._get_contact_force(self.robotId, self.objectId,
-                                       self.robot_link_to_index['gripper_right_finger'],
-                                       self.object_link_to_index['objectLink']))
+                                       self.robot_link_to_index['gripper_right_finger_link'],
+                                       self.object_link_to_index['object_link']))
             self.force_buffer_l.append(self._get_contact_force(self.robotId, self.objectId,
-                                       self.robot_link_to_index['gripper_left_finger'],
-                                       self.object_link_to_index['objectLink']))
+                                       self.robot_link_to_index['gripper_left_finger_link'],
+                                       self.object_link_to_index['object_link']))
 
             # create force array
             forces = np.array([
@@ -93,3 +93,50 @@ class GripperTactileEnv(LoadCellTactileEnv):
                                     robot_pos=[0.0, 0.0, 0.27],
                                     object_model="objects/object.urdf",
                                     object_pos=[0.04, 0.02, 0.6])
+
+class TIAGoTactileEnv(LoadCellTactileEnv):
+
+    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+
+        joints = [
+            'torso_lift_joint',
+            'arm_1_joint',
+            'arm_2_joint',
+            'arm_3_joint',
+            'arm_4_joint',
+            'arm_5_joint',
+            'arm_6_joint',
+            'arm_7_joint',
+            'gripper_right_finger_joint',
+            'gripper_left_finger_joint',
+        ]
+        
+        initial_state = initial_state or [
+             0.,
+             2.71,
+             -0.173,
+             1.44,
+             1.79,
+             0.23,
+             -0.0424,
+             -0.0209,
+             0.045,
+             0.045
+        ]
+        
+        LoadCellTactileEnv.__init__(self,
+                                    dt=dt,
+                                    show_gui=show_gui,
+                                    joints=joints,
+                                    initial_state=initial_state,
+                                    cam_yaw=89.6000747680664,
+                                    cam_pitch=-35.40000915527344,
+                                    cam_distance=1.6000027656555176,
+                                    force_noise_mu=force_noise_mu,
+                                    force_noise_sigma=force_noise_sigma,
+                                    force_smoothing=force_smoothing,
+                                    robot_model="tiago_tactile.urdf",
+                                    object_model="objects/object.urdf",
+                                    object_pos=[0.73, 0.07, 0.6],
+                                    table_model="objects/table.urdf",
+                                    table_pos=[0.7, 0, 0.27])

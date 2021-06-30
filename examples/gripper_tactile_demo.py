@@ -39,7 +39,7 @@ def update_plot():
 # ----------------------------
 
 show_gui = True
-env = GripperTactileEnv(show_gui=show_gui, force_noise_sigma=0.0077)
+env = GripperTactileEnv(show_gui=show_gui)
 
 waitSteps = 50
 trajSteps = 140

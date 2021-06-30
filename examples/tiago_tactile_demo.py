@@ -1,6 +1,6 @@
 import numpy as np
 
-from tiago_rl.envs import GripperTactileEnv
+from tiago_rl.envs import TIAGoTactileEnv
 
 # ForcePlot setup
 # ----------------------------
@@ -38,8 +38,8 @@ def update_plot():
 # Environment setup
 # ----------------------------
 
-show_gui = False
-env = GripperTactileEnv(dt=1./240., show_gui=show_gui, force_noise_sigma=0.0077)
+show_gui = True
+env = TIAGoTactileEnv(show_gui=show_gui)
 
 waitSteps = 50
 trajSteps = 140
@@ -48,20 +48,15 @@ torso_qs = np.linspace(0, 0.05, num=trajSteps)
 
 # Event Loop
 # ----------------------------
-pos = [0.045, 0.045]
 
 for i in range(300):
-    if waitSteps < i < waitSteps+trajSteps:
-        n = i-waitSteps
-        o, _, _, _ = env.step(2*[gripper_qs[n]])
-    else:
-        o, _, _, _ = env.step(env.desired_pos)
+    o, _, _, _ = env.step(env.desired_pos)
 
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
     obs = o['observation']
     f = obs[-2:]
-    pos = obs[:2]
+    # pos = obs[:2]
 
     if show_gui:
         forces_r.append(f[0])

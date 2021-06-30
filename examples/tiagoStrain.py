@@ -28,7 +28,6 @@ name2Idx = {key.decode(): value for (value, key) in [p.getJointInfo(robId, i)[:2
 # set initial grasping position
 initialPositions = [
     ['torso_lift_joint', 0.],
-    ['head_2_joint', -0.7],
     ['arm_1_joint', 2.71],
     ['arm_2_joint', -0.173],
     ['arm_3_joint', 1.44],
