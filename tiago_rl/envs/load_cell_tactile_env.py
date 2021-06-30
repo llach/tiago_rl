@@ -6,9 +6,7 @@ from tiago_rl.envs import BulletRobotEnv
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None,
-                 force_smoothing=None, cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
-                 robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None, *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
         self.force_noise_mu = force_noise_mu or 0.0
@@ -18,21 +16,10 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
 
         BulletRobotEnv.__init__(self,
-                                dt=dt,
                                 joints=joints,
-                                show_gui=show_gui,
                                 n_actions=len(joints),
-                                initial_state=initial_state,
-                                cam_yaw=cam_yaw,
-                                cam_pitch=cam_pitch,
-                                cam_distance=cam_distance,
-                                cam_target_position=cam_target_position,
-                                robot_model=robot_model,
-                                robot_pos=robot_pos,
-                                object_model=object_model,
-                                object_pos=object_pos,
-                                table_model=table_model,
-                                table_pos=table_pos)
+                                *args,
+                                **kwargs)
 
     # BulletRobotEnv methods
     # ----------------------------
@@ -75,29 +62,26 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
 class GripperTactileEnv(LoadCellTactileEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None):
+    def __init__(self, initial_state=None, *args, **kwargs):
 
         LoadCellTactileEnv.__init__(self,
-                                    dt=dt,
-                                    show_gui=show_gui,
                                     joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
                                     initial_state=initial_state or [0.045, 0.045],
                                     cam_yaw=120.5228271484375,
                                     cam_pitch=-68.42454528808594,
                                     cam_distance=1.1823151111602783,
                                     cam_target_position=(-0.2751278877258301, -0.15310688316822052, -0.27969369292259216),
-                                    force_noise_mu=force_noise_mu,
-                                    force_noise_sigma=force_noise_sigma,
-                                    force_smoothing=force_smoothing,
                                     robot_model="gripper_tactile.urdf",
                                     robot_pos=[0.0, 0.0, 0.27],
                                     object_model="objects/object.urdf",
-                                    object_pos=[0.04, 0.02, 0.6])
+                                    object_pos=[0.04, 0.02, 0.6],
+                                    *args,
+                                    **kwargs)
 
 
 class TIAGoTactileEnv(LoadCellTactileEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None):
+    def __init__(self, initial_state=None, *args, **kwargs):
 
         joints = [
             'torso_lift_joint',
@@ -126,18 +110,14 @@ class TIAGoTactileEnv(LoadCellTactileEnv):
         ]
         
         LoadCellTactileEnv.__init__(self,
-                                    dt=dt,
-                                    show_gui=show_gui,
                                     joints=joints,
                                     initial_state=initial_state,
                                     cam_yaw=89.6000747680664,
                                     cam_pitch=-35.40000915527344,
                                     cam_distance=1.6000027656555176,
-                                    force_noise_mu=force_noise_mu,
-                                    force_noise_sigma=force_noise_sigma,
-                                    force_smoothing=force_smoothing,
                                     robot_model="tiago_tactile.urdf",
                                     object_model="objects/object.urdf",
                                     object_pos=[0.73, 0.07, 0.6],
                                     table_model="objects/table.urdf",
-                                    table_pos=[0.7, 0, 0.27])
+                                    table_pos=[0.7, 0, 0.27],
+                                    *args, **kwargs)
