@@ -1,15 +1,14 @@
 import numpy as np
-import pybullet as p
-
 from collections import deque
 
 from tiago_rl.envs import BulletRobotEnv
-from tiago_rl.envs.utils import link_to_idx, joint_to_idx
 
 
-class GripperTactileEnv(BulletRobotEnv):
+class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+    def __init__(self, joints, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=0.0077,
+                 force_smoothing=4, cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
+                 robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
         self.force_smoothing = force_smoothing
         self.force_noise_mu = force_noise_mu
@@ -20,42 +19,23 @@ class GripperTactileEnv(BulletRobotEnv):
 
         BulletRobotEnv.__init__(self,
                                 dt=dt,
-                                n_actions=2, # 3 if torso is included
+                                joints=joints,
                                 show_gui=show_gui,
-                                joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
-                                initial_state=initial_state or [0.045, 0.045])
-
-        # overwrite superclass defaults
-        self.camera_distance = 1.1823151111602783
-        self.camera_yaw = 120.5228271484375
-        self.camera_pitch = -68.42454528808594
-        self.camera_target_position = (-0.2751278877258301, -0.15310688316822052, -0.27969369292259216)
-
-        if show_gui:
-            # focus grasping scene
-            p.resetDebugVisualizerCamera(self.camera_distance,
-                                         self.camera_yaw,
-                                         self.camera_pitch,
-                                         self.camera_target_position)
-
-        self.reset()
+                                n_actions=len(joints),
+                                initial_state=initial_state,
+                                cam_yaw=cam_yaw,
+                                cam_pitch=cam_pitch,
+                                cam_distance=cam_distance,
+                                cam_target_position=cam_target_position,
+                                robot_model=robot_model,
+                                robot_pos=robot_pos,
+                                object_model=object_model,
+                                object_pos=object_pos,
+                                table_model=table_model,
+                                table_pos=table_pos)
 
     # BulletRobotEnv methods
     # ----------------------------
-
-    def _load_model(self):
-        super()._load_model()
-
-        # load scene objects
-        self.objectId = p.loadURDF("objects/object.urdf", basePosition=[0.04, 0.02, 0.6])
-        self.robotId = p.loadURDF("gripper_tactile.urdf", basePosition=[0.0, 0.0, 0.27])
-
-        # link name to link index mappings
-        self.robot_link_to_index = link_to_idx(self.robotId)
-        self.object_link_to_index = link_to_idx(self.objectId)
-
-        # joint name to joint index mapping
-        self.jn2Idx = joint_to_idx(self.robotId)
 
     def _transform_forces(self, force):
         return (force / 100) + np.random.normal(self.force_noise_mu, self.force_noise_sigma)
@@ -91,3 +71,25 @@ class GripperTactileEnv(BulletRobotEnv):
     def _compute_reward(self):
         # todo add reward calculation
         return 0
+
+
+class GripperTactileEnv(LoadCellTactileEnv):
+
+    def __init__(self, initial_state=None, dt=1./240., show_gui=False, force_noise_mu=0.0, force_noise_sigma=1.0, force_smoothing=4):
+
+        LoadCellTactileEnv.__init__(self,
+                                    dt=dt,
+                                    show_gui=show_gui,
+                                    joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
+                                    initial_state=initial_state or [0.045, 0.045],
+                                    cam_yaw=120.5228271484375,
+                                    cam_pitch=-68.42454528808594,
+                                    cam_distance=1.1823151111602783,
+                                    cam_target_position=(-0.2751278877258301, -0.15310688316822052, -0.27969369292259216),
+                                    force_noise_mu=force_noise_mu,
+                                    force_noise_sigma=force_noise_sigma,
+                                    force_smoothing=force_smoothing,
+                                    robot_model="gripper_tactile.urdf",
+                                    robot_pos=[0.0, 0.0, 0.27],
+                                    object_model="objects/object.urdf",
+                                    object_pos=[0.04, 0.02, 0.6])
