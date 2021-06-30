@@ -88,7 +88,7 @@
         </collision>
     </link>
 
-    <link name="gripper_right_finger">
+    <link name="gripper_right_finger_link">
         <inertial>
           <origin rpy="0 0 0" xyz="-0.004470 0.010766 -0.121013"/>
           <mass value="0.109980"/>
@@ -109,7 +109,7 @@
         </collision>
     </link>
 
-    <link name="gripper_left_finger">
+    <link name="gripper_left_finger_link">
         <inertial>
           <origin rpy="0 0 0" xyz="-0.004470 0.010766 -0.121013"/>
           <mass value="0.109980"/>

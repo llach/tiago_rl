@@ -1,45 +1,23 @@
 import numpy as np
 
 from tiago_rl.envs import TIAGoTactileEnv
-
-# ForcePlot setup
-# ----------------------------
-
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
-
-import platform
-
-app = QtGui.QApplication([])
-
-win = pg.GraphicsLayoutWidget(show=True,)
-win.resize(1000, 600)
-win.setWindowTitle('Force Visualisation')
-
-# Enable antialiasing for prettier plots
-pg.setConfigOptions(antialias=True)
-
-p1 = win.addPlot(title="TA11 Scalar Contact Forces")
-
-curve = p1.plot(pen='y')
-curve2 = p1.plot(pen='r')
-forces_l = []
-forces_r = []
-
-def update_plot():
-    global curve, curve2, forces_l, forces_r, p1
-
-    curve.setData(forces_l)
-    curve2.setData(forces_r)
-
-    if platform.system() == 'Linux':
-        app.processEvents()
+from tiago_rl.misc import LoadCellVisualiser
 
 # Environment setup
 # ----------------------------
 
 show_gui = True
 env = TIAGoTactileEnv(show_gui=show_gui)
+
+# Visualisation setup
+# ----------------------------
+
+vis = None
+if show_gui:
+    vis = LoadCellVisualiser()
+
+# Trajectory sampling
+# ----------------------------
 
 waitSteps = 50
 trajSteps = 140
@@ -56,17 +34,9 @@ for i in range(300):
     # see GripperTactileEnv._get_obs() for reference.
     obs = o['observation']
     f = obs[-2:]
-    # pos = obs[:2]
 
-    if show_gui:
-        forces_r.append(f[0])
-        forces_l.append(f[1])
-
-        curve.setData(forces_l)
-        curve2.setData(forces_r)
-
-        if platform.system() == 'Linux':
-            app.processEvents()
+    if vis:
+        vis.update_plot(f)
     elif i == 110:
         # test rendering if not showing GUI
         import matplotlib.pyplot as plt
