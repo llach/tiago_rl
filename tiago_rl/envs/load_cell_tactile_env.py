@@ -64,9 +64,21 @@ class GripperTactileEnv(LoadCellTactileEnv):
 
     def __init__(self, initial_state=None, *args, **kwargs):
 
+        joints = [
+            'gripper_right_finger_joint',
+            'gripper_left_finger_joint',
+            'torso_to_arm'
+        ]
+
+        initial_state = initial_state or [
+            0.045,
+            0.045,
+            0.0
+        ]
+
         LoadCellTactileEnv.__init__(self,
-                                    joints=['gripper_right_finger_joint', 'gripper_left_finger_joint'], # , 'torso_to_arm']
-                                    initial_state=initial_state or [0.045, 0.045],
+                                    joints=joints,
+                                    initial_state=initial_state,
                                     cam_yaw=120.5228271484375,
                                     cam_pitch=-68.42454528808594,
                                     cam_distance=1.1823151111602783,
