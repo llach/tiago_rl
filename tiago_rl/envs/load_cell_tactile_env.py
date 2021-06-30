@@ -28,7 +28,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
         return (force / 100) + np.random.normal(self.force_noise_mu, self.force_noise_sigma)
 
     def _get_obs(self):
-        pos, vel = self._get_joint_states()
+        # get joint positions and velocities from superclass
+        joint_states = super(LoadCellTactileEnv, self)._get_obs()['observation']
 
         if not self.objectId:
             forces = [0.0, 0.0]
@@ -47,7 +48,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
                 np.mean(self.force_buffer_l)
             ])
 
-        obs = np.concatenate([pos, vel, forces])
+        obs = np.concatenate([joint_states, forces])
         return {
             'observation': obs
         }

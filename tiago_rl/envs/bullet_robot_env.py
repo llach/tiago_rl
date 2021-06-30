@@ -222,13 +222,16 @@ class BulletRobotEnv(gym.Env):
         else:
             print("Environment has no joints specified!")
 
-    def _compute_reward(self):
-        """Returns the reward for this timestep.
-        """
-        raise NotImplementedError()
-
     def _get_obs(self):
         """Returns the observation.
+        """
+        pos, vel = self._get_joint_states()
+        return {
+            'observation': np.concatenate([pos, vel])
+        }
+
+    def _compute_reward(self):
+        """Returns the reward for this timestep.
         """
         raise NotImplementedError()
 
