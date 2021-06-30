@@ -293,3 +293,16 @@ class BulletRobotEnv(gym.Env):
             pos.append(js[0])
             vel.append(js[1])
         return pos, vel
+
+    def create_desired_state(self, des_qs):
+        """Creates a complete desired joint state from a partial one.
+        """
+        ds = self.desired_pos.copy()
+
+        for jn, des_q in des_qs.items():
+            if jn not in self.joints:
+                print(f"Unknown joint {jn}")
+                exit(-1)
+            ds[self.joints.index(jn)] = des_q
+        return ds
+
