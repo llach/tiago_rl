@@ -123,6 +123,11 @@ class BulletRobotEnv(gym.Env):
         rgb_array = rgb_array[:, :, :3]
         return rgb_array
 
+    def close(self):
+        """Cleanup sim.
+        """
+        p.disconnect()
+
     # Extension methods
     # ----------------------------
 
