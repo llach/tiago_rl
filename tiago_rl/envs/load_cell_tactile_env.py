@@ -15,11 +15,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
 
-        BulletRobotEnv.__init__(self,
-                                joints=joints,
-                                n_actions=len(joints),
-                                *args,
-                                **kwargs)
+        BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
 
     # BulletRobotEnv methods
     # ----------------------------

@@ -20,7 +20,7 @@ class BulletRobotEnv(gym.Env):
     This code's starting point was the MuJoCo-based robotics environment from gym:
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
-    def __init__(self, initial_state, n_actions, joints, dt=1./240., show_gui=False,
+    def __init__(self, initial_state, joints, n_actions=None, dt=1./240., show_gui=False,
                  cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
                  robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
@@ -52,6 +52,7 @@ class BulletRobotEnv(gym.Env):
         self.joints = joints
         self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
+        self.n_actions = n_actions or len(joints)
 
         # current state
         self.current_pos = initial_state
@@ -74,7 +75,7 @@ class BulletRobotEnv(gym.Env):
         self.seed()
         obs = self.reset()
 
-        self.action_space = spaces.Box(-np.inf, np.inf, shape=(n_actions,), dtype='float32')
+        self.action_space = spaces.Box(-np.inf, np.inf, shape=(self.n_actions,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
         ))
@@ -177,8 +178,6 @@ class BulletRobotEnv(gym.Env):
             # load table
             self.tableId = p.loadURDF(self.table_model, basePosition=self.table_pos)
             self.table_link_to_index = link_to_idx(self.tableId)
-
-
 
     def _reset_sim(self):
         """Resets a simulation and indicates whether or not it was successful.

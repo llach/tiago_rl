@@ -1,15 +1,12 @@
 import argparse
 import numpy as np
 
-from tiago_rl.envs import GripperTactileEnv, TIAGoTactileEnv
-from tiago_rl.misc import LoadCellVisualiser
+from tiago_rl.envs import TIAGoPALGripperEnv
 
 # Parse CLI arguments
 # ----------------------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-e', '--env', default='gripper_ta11', type=str,
-                    help='environment type. defaults to gripper_ta11')
 parser.add_argument('--show_gui', default=False, action='store_true')
 parser.add_argument('--no-show_gui', dest='show_gui', action='store_false')
 args = parser.parse_args()
@@ -18,21 +15,7 @@ args = parser.parse_args()
 # ----------------------------
 
 show_gui = args.show_gui
-
-if args.env == 'gripper_ta11':
-    env = GripperTactileEnv(show_gui=show_gui)
-elif args.env == 'tiago_ta11':
-    env = TIAGoTactileEnv(show_gui=show_gui)
-else:
-    print(f"Unknown environment {args.env}")
-    exit(-1)
-
-# Visualisation setup
-# ----------------------------
-
-vis = None
-if show_gui:
-    vis = LoadCellVisualiser()
+env = TIAGoPALGripperEnv(show_gui=show_gui)
 
 # Trajectory sampling
 # ----------------------------
@@ -60,11 +43,8 @@ for i in range(300):
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
     obs = o['observation']
-    f = obs[-2:]
 
-    if vis:
-        vis.update_plot(f)
-    elif i == 110:
+    if i == 110 and not show_gui:
         # test rendering if not showing GUI
         import matplotlib.pyplot as plt
 
