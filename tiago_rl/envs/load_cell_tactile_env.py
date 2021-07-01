@@ -4,6 +4,11 @@ from collections import deque
 from tiago_rl.envs import BulletRobotEnv
 
 
+def force_delta(force_a, force_b):
+    assert force_a.shape == force_b.shape
+    return np.linalg.norm(force_a - force_b, axis=-1)
+
+
 RAW_FORCES = 'raw'
 BINARY_FORCES = 'binary'
 
@@ -14,7 +19,7 @@ CONT_REWARDS = 'continuous'
 class LoadCellTactileEnv(BulletRobotEnv):
 
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
-                 target_force=None, force_threshold=None, force_type=None, reward_type=None,
+                 target_forces=None, force_threshold=None, force_type=None, reward_type=None,
                  *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
@@ -24,13 +29,14 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
 
-        self.target_force = target_force or 10.0
+        self.target_forces = target_forces or np.array([10.0, 10.0])
         self.force_threshold = force_threshold or 3*self.force_noise_sigma
 
         self.force_type = force_type or RAW_FORCES
         self.reward_type = reward_type or SPARSE_REWARDS
 
-        self.current_forces = [0.0, 0.0]
+        self.current_forces = np.array([0.0, 0.0])
+        self.current_forces_raw = np.array([0.0, 0.0])
 
         if self.force_type not in [RAW_FORCES, BINARY_FORCES]:
             print(f"unknown force type: {self.force_type}")
@@ -61,17 +67,16 @@ class LoadCellTactileEnv(BulletRobotEnv):
                                        self.robot_link_to_index['gripper_left_finger_link'],
                                        self.object_link_to_index['object_link']))
 
+            self.current_forces_raw = np.array([
+                np.mean(self.force_buffer_r),
+                np.mean(self.force_buffer_l)
+            ])
+
             # calculate current forces based on force type
             if self.force_type == BINARY_FORCES:
-                self.current_forces = np.array([
-                    np.mean(self.force_buffer_r) > self.force_threshold,
-                    np.mean(self.force_buffer_l) > self.force_threshold
-                ])
+                self.current_forces = np.array(self.current_forces_raw) > self.force_threshold
             elif self.force_type == RAW_FORCES:
-                self.current_forces = np.array([
-                    np.mean(self.force_buffer_r),
-                    np.mean(self.force_buffer_l)
-                ])
+                self.current_forces = np.array(self.current_forces_raw)
             else:
                 print(f"unknown force type: {self.force_type}")
                 exit(-1)
@@ -82,11 +87,17 @@ class LoadCellTactileEnv(BulletRobotEnv):
         }
 
     def _is_success(self):
-        return False
+        """If the force delta between target and current force is smaller than the force threshold, it's a success.
+        """
+        delta_f = force_delta(self.current_forces_raw, self.target_forces)
+        return (np.abs(delta_f) < self.force_threshold).astype(np.float32)
 
     def _compute_reward(self):
-        # todo add reward calculation
-        return 0
+        delta_f = force_delta(self.current_forces_raw, self.target_forces)
+        if self.reward_type == SPARSE_REWARDS:
+            return -(delta_f < self.force_threshold).astype(np.float32)
+        else:
+            return -delta_f
 
 
 class GripperTactileEnv(LoadCellTactileEnv):

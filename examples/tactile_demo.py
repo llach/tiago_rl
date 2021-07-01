@@ -18,7 +18,7 @@ args = parser.parse_args()
 # ----------------------------
 
 show_gui = args.show_gui
-force_type = None#'binary'
+force_type = 'binary'
 if args.env == 'gripper_ta11':
     env = GripperTactileEnv(show_gui=show_gui, force_type=force_type)
 elif args.env == 'tiago_ta11':
