@@ -4,9 +4,18 @@ from collections import deque
 from tiago_rl.envs import BulletRobotEnv
 
 
+RAW_FORCES = 'raw'
+BINARY_FORCES = 'binary'
+
+SPARSE_REWARDS = 'sparse'
+CONT_REWARDS = 'continuous'
+
+
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None, *args, **kwargs):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
+                 target_force=None, force_threshold=None, force_type=None, reward_type=None,
+                 *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
         self.force_noise_mu = force_noise_mu or 0.0
@@ -14,6 +23,22 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
+
+        self.target_force = target_force or 10.0
+        self.force_threshold = force_threshold or 3*self.force_noise_sigma
+
+        self.force_type = force_type or RAW_FORCES
+        self.reward_type = reward_type or SPARSE_REWARDS
+
+        self.current_forces = [0.0, 0.0]
+
+        if self.force_type not in [RAW_FORCES, BINARY_FORCES]:
+            print(f"unknown force type: {self.force_type}")
+            exit(-1)
+
+        if self.reward_type not in [SPARSE_REWARDS, CONT_REWARDS]:
+            print(f"unknown reward type: {self.reward_type}")
+            exit(-1)
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
 
@@ -27,10 +52,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
         # get joint positions and velocities from superclass
         joint_states = super(LoadCellTactileEnv, self)._get_obs()['observation']
 
-        if not self.objectId:
-            forces = [0.0, 0.0]
-        else:
-            # get current forces
+        if self.objectId:
+            # get current contact forces
             self.force_buffer_r.append(self._get_contact_force(self.robotId, self.objectId,
                                        self.robot_link_to_index['gripper_right_finger_link'],
                                        self.object_link_to_index['object_link']))
@@ -38,13 +61,22 @@ class LoadCellTactileEnv(BulletRobotEnv):
                                        self.robot_link_to_index['gripper_left_finger_link'],
                                        self.object_link_to_index['object_link']))
 
-            # create force array
-            forces = np.array([
-                np.mean(self.force_buffer_r),
-                np.mean(self.force_buffer_l)
-            ])
+            # calculate current forces based on force type
+            if self.force_type == BINARY_FORCES:
+                self.current_forces = np.array([
+                    np.mean(self.force_buffer_r) > self.force_threshold,
+                    np.mean(self.force_buffer_l) > self.force_threshold
+                ])
+            elif self.force_type == RAW_FORCES:
+                self.current_forces = np.array([
+                    np.mean(self.force_buffer_r),
+                    np.mean(self.force_buffer_l)
+                ])
+            else:
+                print(f"unknown force type: {self.force_type}")
+                exit(-1)
 
-        obs = np.concatenate([joint_states, forces])
+        obs = np.concatenate([joint_states, self.current_forces.astype(np.float32)])
         return {
             'observation': obs
         }

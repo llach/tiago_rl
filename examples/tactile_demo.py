@@ -18,11 +18,11 @@ args = parser.parse_args()
 # ----------------------------
 
 show_gui = args.show_gui
-
+force_type = None#'binary'
 if args.env == 'gripper_ta11':
-    env = GripperTactileEnv(show_gui=show_gui)
+    env = GripperTactileEnv(show_gui=show_gui, force_type=force_type)
 elif args.env == 'tiago_ta11':
-    env = TIAGoTactileEnv(show_gui=show_gui)
+    env = TIAGoTactileEnv(show_gui=show_gui, force_type=force_type)
 else:
     print(f"Unknown environment {args.env}")
     exit(-1)
