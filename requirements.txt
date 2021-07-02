@@ -1,2 +1,4 @@
+pyqtgraph
 pybullet
+pyqt5
 gym
