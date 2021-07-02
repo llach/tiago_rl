@@ -19,10 +19,12 @@ args = parser.parse_args()
 
 show_gui = args.show_gui
 force_type = 'binary'
+target_forces = np.array([1.0, 1.0])
+
 if args.env == 'gripper_ta11':
-    env = GripperTactileEnv(show_gui=show_gui, force_type=force_type)
+    env = GripperTactileEnv(show_gui=show_gui, force_type=force_type, target_forces=target_forces)
 elif args.env == 'tiago_ta11':
-    env = TIAGoTactileEnv(show_gui=show_gui, force_type=force_type)
+    env = TIAGoTactileEnv(show_gui=show_gui, force_type=force_type, target_forces=target_forces)
 else:
     print(f"Unknown environment {args.env}")
     exit(-1)
@@ -32,7 +34,7 @@ else:
 
 vis = None
 if show_gui:
-    vis = LoadCellVisualiser()
+    vis = LoadCellVisualiser(env)
 
 # Trajectory sampling
 # ----------------------------
@@ -53,9 +55,9 @@ for i in range(300):
             'gripper_right_finger_joint': gripper_qs[n],
             'gripper_left_finger_joint': gripper_qs[n],
         })
-        o, _, _, _ = env.step(new_state)
+        o, reward, done, info = env.step(new_state)
     else:
-        o, _, _, _ = env.step(env.desired_pos)
+        o, reward, done, info = env.step(env.desired_pos)
 
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
@@ -63,7 +65,7 @@ for i in range(300):
     f = obs[-2:]
 
     if vis:
-        vis.update_plot(f)
+        vis.update_plot(is_success=info['is_success'], reward=reward)
     elif i == 110:
         # test rendering if not showing GUI
         import matplotlib.pyplot as plt

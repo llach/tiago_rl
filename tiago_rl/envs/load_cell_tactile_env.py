@@ -25,15 +25,18 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.force_smoothing = force_smoothing or 4
         self.force_noise_mu = force_noise_mu or 0.0
         self.force_noise_sigma = force_noise_sigma or 0.0077
+        self.force_threshold = force_threshold or 3 * self.force_noise_sigma
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
 
-        self.target_forces = target_forces or np.array([10.0, 10.0])
-        self.force_threshold = force_threshold or 3*self.force_noise_sigma
+        if target_forces is not None:
+            self.target_forces = np.array(target_forces)
+        else:
+            np.array([10.0, 10.0])
 
         self.force_type = force_type or RAW_FORCES
-        self.reward_type = reward_type or SPARSE_REWARDS
+        self.reward_type = reward_type or CONT_REWARDS
 
         self.current_forces = np.array([0.0, 0.0])
         self.current_forces_raw = np.array([0.0, 0.0])
@@ -67,6 +70,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
                                        self.robot_link_to_index['gripper_left_finger_link'],
                                        self.object_link_to_index['object_link']))
 
+            # although forces are called "raw", the are averaged to be as close as possible to the real data.
             self.current_forces_raw = np.array([
                 np.mean(self.force_buffer_r),
                 np.mean(self.force_buffer_l)
@@ -74,20 +78,24 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
             # calculate current forces based on force type
             if self.force_type == BINARY_FORCES:
-                self.current_forces = np.array(self.current_forces_raw) > self.force_threshold
+                self.current_forces = (np.array(self.current_forces_raw) > self.force_threshold).astype(np.float32)
             elif self.force_type == RAW_FORCES:
-                self.current_forces = np.array(self.current_forces_raw)
+                self.current_forces = self.current_forces_raw.copy()
             else:
                 print(f"unknown force type: {self.force_type}")
                 exit(-1)
 
-        obs = np.concatenate([joint_states, self.current_forces.astype(np.float32)])
+        obs = np.concatenate([joint_states, self.current_forces])
         return {
             'observation': obs
         }
 
     def _is_success(self):
         """If the force delta between target and current force is smaller than the force threshold, it's a success.
+        Note, that we use the observation forces here that are averaged over the last k samples. This may lead to
+        this function returning False even though the desired force was hit for one sample (see tactile_demo). The
+        alternative would be to calculate the success on data that differs from the observation, which an agent would
+        not have access too. We assume that that behavior would be more confusing for an agent than it would be helpful.
         """
         delta_f = force_delta(self.current_forces_raw, self.target_forces)
         return (np.abs(delta_f) < self.force_threshold).astype(np.float32)
