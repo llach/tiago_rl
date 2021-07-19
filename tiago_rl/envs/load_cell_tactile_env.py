@@ -33,7 +33,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
         if target_forces is not None:
             self.target_forces = np.array(target_forces)
         else:
-            np.array([10.0, 10.0])
+            self.target_forces = np.array([10.0, 10.0])
 
         self.force_type = force_type or RAW_FORCES
         self.reward_type = reward_type or CONT_REWARDS
