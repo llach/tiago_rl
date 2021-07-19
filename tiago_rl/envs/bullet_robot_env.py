@@ -94,6 +94,8 @@ class BulletRobotEnv(gym.Env):
         self._step_sim()
         self._step_callback()
 
+        self.current_pos, self.current_vel = self._get_joint_states()
+
         obs = self._get_obs()
         reward = self._compute_reward()
         done = False
