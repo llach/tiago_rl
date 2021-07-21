@@ -59,7 +59,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
     def _get_obs(self):
         # get joint positions and velocities from superclass
-        joint_states = super(LoadCellTactileEnv, self)._get_obs()['observation']
+        joint_states = super(LoadCellTactileEnv, self)._get_obs()
 
         if self.objectId:
             # get current contact forces
@@ -85,10 +85,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
                 print(f"unknown force type: {self.force_type}")
                 exit(-1)
 
-        obs = np.concatenate([joint_states, self.current_forces])
-        return {
-            'observation': obs
-        }
+        return np.concatenate([joint_states, self.current_forces])
 
     def _is_success(self):
         """If the force delta between target and current force is smaller than the force threshold, it's a success.

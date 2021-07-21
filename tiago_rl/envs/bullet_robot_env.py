@@ -75,10 +75,11 @@ class BulletRobotEnv(gym.Env):
         self.seed()
         obs = self.reset()
 
-        self.action_space = spaces.Box(-np.inf, np.inf, shape=(self.n_actions,), dtype='float32')
-        self.observation_space = spaces.Dict(dict(
-            observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
-        ))
+        action_high = 10
+        self.action_space = spaces.Box(-action_high, action_high, shape=(self.n_actions,), dtype='float32')
+
+        high = 5
+        self.observation_space = spaces.Box(-high, high, shape=obs.shape, dtype='float32')
 
     # Env methods
     # ----------------------------
@@ -227,9 +228,7 @@ class BulletRobotEnv(gym.Env):
         """Returns the observation.
         """
         pos, vel = self._get_joint_states()
-        return {
-            'observation': np.concatenate([pos, vel])
-        }
+        return np.concatenate([pos, vel])
 
     def _compute_reward(self):
         """Returns the reward for this timestep.
