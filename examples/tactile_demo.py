@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 
+from tiago_rl.envs.wrappers import MaxEpisodeTimestepWrapper
 from tiago_rl.envs import GripperTactileEnv, TIAGoTactileEnv
 from tiago_rl.misc import LoadCellVisualiser
 
@@ -29,6 +30,8 @@ else:
     print(f"Unknown environment {args.env}")
     exit(-1)
 
+env = MaxEpisodeTimestepWrapper(env, 150)
+
 # Visualisation setup
 # ----------------------------
 
@@ -55,13 +58,12 @@ for i in range(300):
             'gripper_right_finger_joint': gripper_qs[n],
             'gripper_left_finger_joint': gripper_qs[n],
         })
-        o, reward, done, info = env.step(new_state)
+        obs, reward, done, info = env.step(new_state)
     else:
-        o, reward, done, info = env.step(env.desired_pos)
+        obs, reward, done, info = env.step(env.current_pos)
 
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
-    obs = o['observation']
     f = obs[-2:]
 
     if vis:
