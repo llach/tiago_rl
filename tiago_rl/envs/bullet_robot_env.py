@@ -89,8 +89,11 @@ class BulletRobotEnv(gym.Env):
         return [seed]
 
     def step(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-        self._set_action(action)
+        if np.any(np.isnan(action)):
+            print(f"action has NaNs: {action}")
+        else:
+            action = np.clip(action, self.action_space.low, self.action_space.high)
+            self._set_action(action)
 
         self._step_sim()
         self._step_callback()
