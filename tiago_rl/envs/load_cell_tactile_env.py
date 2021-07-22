@@ -178,3 +178,9 @@ class TIAGoTactileEnv(LoadCellTactileEnv):
                                     table_model="objects/table.urdf",
                                     table_pos=[0.7, 0, 0.27],
                                     *args, **kwargs)
+
+
+class GripperTactileCloseEnv(GripperTactileEnv):
+
+    def _compute_reward(self):
+        return -np.sum(np.abs(np.array([0.0, 0.0])-self.current_pos[:2]))
