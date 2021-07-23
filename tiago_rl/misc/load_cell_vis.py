@@ -39,6 +39,12 @@ class LoadCellVisualiser:
         self.curve_succ = self.pl_succ.plot(pen='g')
         self.curve_rewa = self.pl_rewa.plot(pen='b')
 
+        target_force_line = pg.InfiniteLine(
+            pos=env.force_threshold,
+            angle=0
+        )
+        self.pl_raw.addItem(target_force_line)
+
         # buffers for plotted data
         self.raw_r = []
         self.raw_l = []

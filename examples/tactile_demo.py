@@ -49,7 +49,7 @@ torso_qs = np.linspace(0, 0.05, num=trajSteps)
 
 # Event Loop
 # ----------------------------
-
+env.reset()
 for i in range(300):
     if waitSteps < i < waitSteps + trajSteps:
         n = i - waitSteps
