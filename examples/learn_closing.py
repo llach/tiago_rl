@@ -12,8 +12,6 @@ from stable_baselines3.common.callbacks import BaseCallback
 from tiago_rl.envs import GripperTactileCloseEnv
 from gym.wrappers import TimeLimit
 
-np.seterr(invalid='raise')
-
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """

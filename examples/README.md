@@ -28,3 +28,10 @@ Parameters:
 
 * `(--show_gui|--no-show_gui)`
 if set, PyBullet visualisation is shown. default is `False`
+  
+## Learning to Close
+
+Showcases the use of a simple gripper environment in combination with [stable-baselines3](https://github.com/DLR-RM/stable-baselines3).
+Rewards increase as gripper closes.
+
+ `python learn_closing.py`
