@@ -50,7 +50,7 @@ torso_qs = np.linspace(0, 0.05, num=trajSteps)
 # Event Loop
 # ----------------------------
 
-for i in range(100):
+for i in range(300):
     if waitSteps < i < waitSteps + trajSteps:
         n = i - waitSteps
 
@@ -61,36 +61,6 @@ for i in range(100):
         obs, reward, done, info = env.step(new_state)
     else:
         obs, reward, done, info = env.step(env.current_pos)
-
-    # extract information from observations.
-    # see GripperTactileEnv._get_obs() for reference.
-    f = obs[-2:]
-
-    if vis:
-        vis.update_plot(is_success=info['is_success'], reward=reward)
-    elif i == 110:
-        # test rendering if not showing GUI
-        import matplotlib.pyplot as plt
-
-        plt.imshow(env.render(height=1080, width=1920))
-        plt.show()
-
-env.reset()
-
-for i in range(100):
-    if waitSteps < i < waitSteps + trajSteps:
-        n = i - waitSteps
-
-        new_state = env.create_desired_state({
-            'gripper_right_finger_joint': gripper_qs[n],
-            'gripper_left_finger_joint': gripper_qs[n],
-        })
-        obs, reward, done, info = env.step([np.nan, np.nan, np.nan])
-    else:
-        obs, reward, done, info = env.step(env.current_pos)
-
-    if np.isnan(reward):
-        print("OH NOOOO")
 
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
