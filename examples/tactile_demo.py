@@ -43,7 +43,7 @@ if show_gui:
 # ----------------------------
 
 waitSteps = 50
-trajSteps = 140
+trajSteps = 40
 gripper_qs = np.linspace(0.045, 0.00, num=trajSteps)
 torso_qs = np.linspace(0, 0.05, num=trajSteps)
 

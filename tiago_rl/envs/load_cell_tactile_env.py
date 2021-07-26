@@ -121,9 +121,16 @@ class GripperTactileEnv(LoadCellTactileEnv):
             0.0
         ]
 
+        max_joint_velocities = {
+            'gripper_right_finger_joint': 0.05,
+            'gripper_left_finger_joint': 0.05,
+            'torso_to_arm': 0.07
+        }
+
         LoadCellTactileEnv.__init__(self,
                                     joints=joints,
                                     initial_state=initial_state,
+                                    max_joint_velocities=max_joint_velocities,
                                     cam_yaw=120.5228271484375,
                                     cam_pitch=-68.42454528808594,
                                     cam_distance=1.1823151111602783,
@@ -165,10 +172,17 @@ class TIAGoTactileEnv(LoadCellTactileEnv):
              0.045,
              0.045
         ]
+
+        max_joint_velocities = {
+            'gripper_right_finger_joint': 0.05,
+            'gripper_left_finger_joint': 0.05,
+            'torso_lift_joint': 0.07
+        }
         
         LoadCellTactileEnv.__init__(self,
                                     joints=joints,
                                     initial_state=initial_state,
+                                    max_joint_velocities=max_joint_velocities,
                                     cam_yaw=89.6000747680664,
                                     cam_pitch=-35.40000915527344,
                                     cam_distance=1.6000027656555176,

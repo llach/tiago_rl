@@ -21,7 +21,7 @@ class BulletRobotEnv(gym.Env):
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
     def __init__(self, initial_state, joints, n_actions=None, dt=1./240., show_gui=False,
-                 cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None,
+                 cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None, max_joint_velocities=None,
                  robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
         # PyBullet camera settings for visualisation and RGB array rendering
@@ -52,6 +52,7 @@ class BulletRobotEnv(gym.Env):
         self.joints = joints
         self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
+        self.max_joint_velocities = {} or max_joint_velocities
         self.n_actions = n_actions or len(joints)
 
         # current state
@@ -262,6 +263,12 @@ class BulletRobotEnv(gym.Env):
             for jn, q in state:
                 self._set_joint_pos(self.jn2Idx[jn], q)
 
+            if self.max_joint_velocities:
+                for j, max_vel in self.max_joint_velocities.items():
+                    p.changeDynamics(bodyUniqueId=self.robotId,
+                                     linkIndex=self.jn2Idx[j],
+                                     maxJointVelocity=max_vel)
+
     def _set_joint_pos(self, joint_idx, joint_pos):
         if self.robotId:
             p.resetJointState(self.robotId, joint_idx, joint_pos)
@@ -312,3 +319,8 @@ class BulletRobotEnv(gym.Env):
             ds[self.joints.index(jn)] = des_q
         return ds
 
+    def get_state_dicts(self):
+        return dict(zip(self.joints, self.current_pos)), dict(zip(self.joints, self.current_vel))
+
+    def get_desired_q_dict(self):
+        return dict(zip(self.joints, self.desired_pos))
