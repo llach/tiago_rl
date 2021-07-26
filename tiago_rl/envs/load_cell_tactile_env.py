@@ -112,7 +112,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
         joints = [
             'gripper_right_finger_joint',
             'gripper_left_finger_joint',
-            'torso_to_arm'
+            'torso_lift_joint'
         ]
 
         initial_state = initial_state or [
@@ -124,7 +124,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
         max_joint_velocities = {
             'gripper_right_finger_joint': 0.05,
             'gripper_left_finger_joint': 0.05,
-            'torso_to_arm': 0.07
+            'torso_lift_joint': 0.07
         }
 
         LoadCellTactileEnv.__init__(self,
