@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 
 from stable_baselines3.common.callbacks import BaseCallback
@@ -24,6 +25,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         self.save_path = save_path
         self.best_mean_reward = -np.inf
         self.mean_n = mean_n
+        self.last_time = time.time()
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -32,6 +34,8 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.check_freq == 0:
+            print(f"time for {self.check_freq} steps: {time.time()-self.last_time}")
+            self.last_time = time.time()
 
             # load training reward
             x, y = ts2xy(load_results(self.save_path), 'timesteps')
