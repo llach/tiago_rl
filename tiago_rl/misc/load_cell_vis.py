@@ -1,3 +1,5 @@
+import numpy as np
+
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 
@@ -28,7 +30,7 @@ class LoadCellVisualiser:
         self.win.nextRow()
 
         self.pl_succ = self.win.addPlot(title="Success State")
-        self.pl_rewa = self.win.addPlot(title="Current Reward")
+        self.pl_rewa = self.win.addPlot(title="Cumulative Reward")
 
         self.win.nextRow()
 
@@ -77,6 +79,8 @@ class LoadCellVisualiser:
         self.vel_r = []
         self.vel_l = []
 
+        self.rs = []
+
     def update_plot(self, is_success, reward):
 
         # store new data
@@ -87,7 +91,8 @@ class LoadCellVisualiser:
         self.curr_l.append(self.env.current_forces[1])
 
         self.succ.append(is_success)
-        self.rewa.append(reward)
+        self.rs.append(reward)
+        self.rewa.append(np.sum(self.rs))
 
         jq, jv = self.env.get_state_dicts()
         dq = self.env.get_desired_q_dict()
