@@ -112,20 +112,22 @@ class GripperTactileEnv(LoadCellTactileEnv):
         joints = [
             'gripper_right_finger_joint',
             'gripper_left_finger_joint',
-            # 'torso_lift_joint'
         ]
 
         initial_state = initial_state or [
             0.045,
             0.045,
-            # 0.0
         ]
 
         max_joint_velocities = {
             'gripper_right_finger_joint': 0.08,
             'gripper_left_finger_joint': 0.08,
-            # 'torso_lift_joint': 0.07
         }
+
+        if 'object_pos' not in kwargs:
+            kwargs.update({
+                'object_pos': [0.04, 0.02, 0.6]
+            })
 
         LoadCellTactileEnv.__init__(self,
                                     joints=joints,
@@ -138,7 +140,6 @@ class GripperTactileEnv(LoadCellTactileEnv):
                                     robot_model="gripper_tactile.urdf",
                                     robot_pos=[0.0, 0.0, 0.27],
                                     object_model="objects/object.urdf",
-                                    object_pos=[0.04, 0.02, 0.6],
                                     *args,
                                     **kwargs)
 
