@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 
 from gym.wrappers import TimeLimit
-from tiago_rl.envs import GripperTactileCloseEnv, TIAGoTactileEnv
+from tiago_rl.envs import GripperTactileEnv, TIAGoTactileEnv
 from tiago_rl.misc import LoadCellVisualiser
 
 # Parse CLI arguments
@@ -23,14 +23,14 @@ force_type = 'binary'
 target_forces = np.array([1.0, 1.0])
 
 if args.env == 'gripper_ta11':
-    env = GripperTactileCloseEnv(show_gui=show_gui, force_type=force_type, target_forces=target_forces)
+    env = GripperTactileEnv(show_gui=show_gui, force_type=force_type, target_forces=target_forces)
 elif args.env == 'tiago_ta11':
     env = TIAGoTactileEnv(show_gui=show_gui, force_type=force_type, target_forces=target_forces)
 else:
     print(f"Unknown environment {args.env}")
     exit(-1)
 
-env = TimeLimit(env, max_episode_steps=150)
+env = TimeLimit(env, max_episode_steps=300)
 
 # Visualisation setup
 # ----------------------------
@@ -42,14 +42,15 @@ if show_gui:
 # Trajectory sampling
 # ----------------------------
 
-waitSteps = 50
-trajSteps = 40
-gripper_qs = np.linspace(0.045, 0.00, num=trajSteps)
+waitSteps = 20
+trajSteps = 90
+gripper_qs = np.linspace(0.035, 0.00, num=trajSteps)
 torso_qs = np.linspace(0, 0.05, num=trajSteps)
 
 # Event Loop
 # ----------------------------
 env.reset()
+rewards = []
 for i in range(300):
     if waitSteps < i < waitSteps + trajSteps:
         n = i - waitSteps
@@ -59,9 +60,15 @@ for i in range(300):
             'gripper_left_finger_joint': gripper_qs[n],
         })
         obs, reward, done, info = env.step(new_state)
+    elif i >= waitSteps + trajSteps:
+        new_state = env.create_desired_state({
+            'gripper_right_finger_joint': gripper_qs[-1],
+            'gripper_left_finger_joint': gripper_qs[-1],
+        })
+        obs, reward, done, info = env.step(new_state)
     else:
         obs, reward, done, info = env.step(env.current_pos)
-
+    rewards.append(reward)
     # extract information from observations.
     # see GripperTactileEnv._get_obs() for reference.
     f = obs[-2:]
@@ -74,3 +81,4 @@ for i in range(300):
 
         plt.imshow(env.render(height=1080, width=1920))
         plt.show()
+print(f"reward {np.sum(rewards)}")
