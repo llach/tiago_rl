@@ -34,25 +34,22 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.check_freq == 0:
-            print(f"time for {self.check_freq} steps: {time.time()-self.last_time}")
-            self.last_time = time.time()
 
             # load training reward
             x, y = ts2xy(load_results(self.save_path), 'timesteps')
             if len(x) > 0:
                 # mean training reward over the last N episodes
                 mean_reward = np.mean(y[-self.mean_n:])
-                if self.verbose > 0:
-                    print("Num timesteps: {}".format(self.num_timesteps))
-                    print(
-                        "Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(self.best_mean_reward,
-                                                                                                 mean_reward))
 
                 # new best model, thus we save it
                 if mean_reward > self.best_mean_reward:
+                    print("!!! new best mean reward {:.2f} !!! before: {:.2f}".format(mean_reward, self.best_mean_reward))
                     self.best_mean_reward = mean_reward
                     if self.verbose > 0:
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(f'{self.save_path}/best_model')
+                else:
+                    print("Best mean reward was: {:.2f}".format(self.best_mean_reward))
+
 
         return True
