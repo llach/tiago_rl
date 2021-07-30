@@ -19,13 +19,16 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
     :param verbose: (int)
     """
 
-    def __init__(self, check_freq: int, save_path: str, mean_n=100, verbose=1):
+    def __init__(self, check_freq: int, save_path: str, mean_n=100, verbose=1,
+                 periodic_saving: int = 0, periodic_saving_offset: int = 0):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.save_path = save_path
         self.best_mean_reward = -np.inf
         self.mean_n = mean_n
         self.last_time = time.time()
+        self.ps = periodic_saving
+        self.ps_off = periodic_saving_offset
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -33,6 +36,10 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
             os.makedirs(self.save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
+        if self.ps > 0 and self.n_calls > self.ps_off and self.n_calls % self.ps == 0:
+            print(f"Saving checkpoint model at {self.n_calls}")
+            self.model.save(f'{self.save_path}/model{int(self.n_calls/1000)}')
+
         if self.n_calls % self.check_freq == 0:
 
             # load training reward
@@ -45,8 +52,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                 if mean_reward > self.best_mean_reward:
                     print("!!! new best mean reward {:.2f} !!! before: {:.2f}".format(mean_reward, self.best_mean_reward))
                     self.best_mean_reward = mean_reward
-                    if self.verbose > 0:
-                        print("Saving new best model to {}".format(self.save_path))
+                    print("Saving new best model to {}".format(self.save_path))
                     self.model.save(f'{self.save_path}/best_model')
                 else:
                     print("Best mean reward was: {:.2f}".format(self.best_mean_reward))
