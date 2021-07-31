@@ -6,8 +6,7 @@ from tiago_rl.envs import BulletRobotEnv
 
 def force_delta(force_a, force_b):
     assert force_a.shape == force_b.shape
-    return np.linalg.norm(force_a - force_b, axis=-1)
-
+    return force_a - force_b
 
 RAW_FORCES = 'raw'
 BINARY_FORCES = 'binary'
@@ -85,7 +84,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
                 print(f"unknown force type: {self.force_type}")
                 exit(-1)
 
-        return np.concatenate([joint_states, self.current_forces])
+        return np.concatenate([joint_states, force_delta(self.current_forces_raw, self.target_forces)])
 
     def _is_success(self):
         """If the force delta between target and current force is smaller than the force threshold, it's a success.
@@ -95,14 +94,11 @@ class LoadCellTactileEnv(BulletRobotEnv):
         not have access too. We assume that that behavior would be more confusing for an agent than it would be helpful.
         """
         delta_f = force_delta(self.current_forces_raw, self.target_forces)
-        return (np.abs(delta_f) < self.force_threshold).astype(np.float32)
+        return np.all((np.abs(delta_f) < self.force_threshold)).astype(np.float32)
 
     def _compute_reward(self):
         delta_f = force_delta(self.current_forces_raw, self.target_forces)
-        if self.reward_type == SPARSE_REWARDS:
-            return -(delta_f < self.force_threshold).astype(np.float32)
-        else:
-            return -delta_f
+        return -np.sum(np.abs(delta_f))
 
 
 class GripperTactileEnv(LoadCellTactileEnv):
