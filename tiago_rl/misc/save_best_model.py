@@ -36,7 +36,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
             os.makedirs(self.save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
-        if self.ps > 0 and self.n_calls > self.ps_off and self.n_calls % self.ps == 0:
+        if self.ps > 0 and self.n_calls >= self.ps_off and self.n_calls % self.ps == 0:
             print(f"Saving checkpoint model at {self.n_calls}")
             self.model.save(f'{self.save_path}/model{int(self.n_calls/1000)}')
 
@@ -56,6 +56,4 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     self.model.save(f'{self.save_path}/best_model')
                 else:
                     print("Best mean reward was: {:.2f}".format(self.best_mean_reward))
-
-
         return True
