@@ -12,6 +12,8 @@ import pybullet_data
 from tiago_rl.envs.utils import link_to_idx, joint_to_idx
 
 DEFAULT_SIZE = 500
+POS_CTRL = 'pos'
+VEL_CTRL = 'vel'
 
 
 class BulletRobotEnv(gym.Env):
@@ -20,7 +22,7 @@ class BulletRobotEnv(gym.Env):
     This code's starting point was the MuJoCo-based robotics environment from gym:
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
-    def __init__(self, initial_state, joints, n_actions=None, dt=1./240., show_gui=False,
+    def __init__(self, initial_state, joints, n_actions=None, dt=1./240., show_gui=False, control_mode='vel',
                  cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None, max_joint_velocities=None,
                  robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
@@ -29,6 +31,9 @@ class BulletRobotEnv(gym.Env):
         self.cam_yaw = cam_yaw or 180.0
         self.cam_pitch = cam_pitch or -40.0
         self.cam_target_position = cam_target_position or (0.0, 0.0, 0.0)
+
+        self.control_mode = control_mode
+        assert self.control_mode in {POS_CTRL, VEL_CTRL}, f"unknown control mode {self.control_mode}"
 
         if show_gui:
             self.client_id = p.connect(p.SHARED_MEMORY)
@@ -220,11 +225,15 @@ class BulletRobotEnv(gym.Env):
     def _set_action(self, action):
         """Applies the given action to the simulation.
         """
-        self.desired_pos = action
+        self.desired_pos = action.copy()
 
         if self.joints:
-            for jn, des_q in zip(self.joints, action):
-                self._set_desired_q(self.jn2Idx[jn], des_q)
+            for i, [jn, des_q] in enumerate(zip(self.joints, action)):
+                ji = self.jn2Idx[jn]
+                if self.control_mode == POS_CTRL:
+                    self._set_desired_q(ji, des_q)
+                elif self.control_mode == VEL_CTRL:
+                    self._set_desired_q(ji, self.current_pos[i]+des_q)
         else:
             print("Environment has no joints specified!")
 
