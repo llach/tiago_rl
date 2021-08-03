@@ -42,7 +42,7 @@ class EvalCallback(BaseCallback):
             obs = self.eval_env.reset()
             rewards = []
             for i in range(self.eval_env._max_episode_steps):
-                action = self.model.predict(obs)[0]
+                action = self.model.predict(obs, deterministic=True)[0]
                 obs, reward, done, info = self.eval_env.step(action=action)
                 rewards.append(reward)
             rs.append(np.sum(rewards))
