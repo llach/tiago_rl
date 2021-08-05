@@ -8,6 +8,7 @@ def force_delta(force_a, force_b):
     assert force_a.shape == force_b.shape
     return force_a - force_b
 
+
 RAW_FORCES = 'raw'
 BINARY_FORCES = 'binary'
 
@@ -19,12 +20,13 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
                  target_forces=None, force_threshold=None, force_type=None, reward_type=None,
-                 *args, **kwargs):
+                 force_sampling_range=None, *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
         self.force_noise_mu = force_noise_mu or 0.0
         self.force_noise_sigma = force_noise_sigma or 0.0077
         self.force_threshold = force_threshold or 3 * self.force_noise_sigma
+        self.force_sampling_range = force_sampling_range
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
@@ -99,6 +101,11 @@ class LoadCellTactileEnv(BulletRobotEnv):
     def _compute_reward(self):
         delta_f = force_delta(self.current_forces_raw, self.target_forces)
         return -np.sum(np.abs(delta_f))
+
+    def _reset_callback(self):
+        if self.force_sampling_range:
+            assert len(self.force_sampling_range) == 2
+            self.target_forces = np.full((2,), np.random.uniform(*self.force_sampling_range))
 
 
 class GripperTactileEnv(LoadCellTactileEnv):

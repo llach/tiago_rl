@@ -81,7 +81,10 @@ class BulletRobotEnv(gym.Env):
         self.seed()
         obs = self.reset()
 
-        action_high = 10
+        if self.control_mode == POS_CTRL:
+            action_high = 10
+        elif self.control_mode == VEL_CTRL:
+            action_high = 1
         self.action_space = spaces.Box(-action_high, action_high, shape=(self.n_actions,), dtype='float32')
 
         high = 5
@@ -121,7 +124,8 @@ class BulletRobotEnv(gym.Env):
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
-        # self.goal = self._sample_goal().copy()
+
+        self._reset_callback()
         obs = self._get_obs()
         return obs
 
@@ -256,6 +260,12 @@ class BulletRobotEnv(gym.Env):
     def _step_callback(self):
         """A custom callback that is called after stepping the simulation. Can be used
         to enforce additional constraints on the simulation state.
+        """
+        pass
+
+    def _reset_callback(self):
+        """A custom callback that is called after resetting the simulation. Can be used
+        to randomize certain environment properties.
         """
         pass
 
