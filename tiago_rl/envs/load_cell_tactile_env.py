@@ -38,6 +38,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.force_type = force_type or RAW_FORCES
         self.reward_type = reward_type or CONT_REWARDS
+        assert self.reward_type in {CONT_REWARDS, SPARSE_REWARDS}, f"unknown reward type {self.reward_type}"
 
         self.current_forces = np.array([0.0, 0.0])
         self.current_forces_raw = np.array([0.0, 0.0])
@@ -99,8 +100,12 @@ class LoadCellTactileEnv(BulletRobotEnv):
         return np.all((np.abs(delta_f) < self.force_threshold)).astype(np.float32)
 
     def _compute_reward(self):
-        delta_f = force_delta(self.current_forces_raw, self.target_forces)
-        return -np.sum(np.abs(delta_f))
+        if self.reward_type == CONT_REWARDS:
+            delta_f = force_delta(self.current_forces_raw, self.target_forces)
+            return -np.sum(np.abs(delta_f))
+        elif self.reward_type == SPARSE_REWARDS:
+            is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
+            return np.sum(is_goal)
 
     def _reset_callback(self):
         if self.force_sampling_range:

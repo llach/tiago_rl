@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.Qt import QtGui
 import pyqtgraph as pg
 
 import platform
@@ -55,11 +55,17 @@ class LoadCellVisualiser:
         self.curve_currv_r = self.pl_vel.plot(pen='g')
         self.curve_currv_l = self.pl_vel.plot(pen='b')
 
-        target_force_line = pg.InfiniteLine(
+        self.threshold_line = pg.InfiniteLine(
             pos=env.force_threshold,
             angle=0
         )
-        self.pl_raw.addItem(target_force_line)
+        self.pl_raw.addItem(self.threshold_line)
+
+        self.target_force_line = pg.InfiniteLine(
+            pos=env.target_forces[0],
+            angle=0
+        )
+        self.pl_raw.addItem(self.target_force_line)
 
         # buffers for plotted data
         self.raw_r = []
@@ -80,6 +86,14 @@ class LoadCellVisualiser:
         self.vel_l = []
 
         self.rs = []
+
+    def reset(self, env):
+        self.pl_raw.removeItem(self.target_force_line)
+        self.target_force_line = pg.InfiniteLine(
+            pos=env.target_forces[0],
+            angle=0
+        )
+        self.pl_raw.addItem(self.target_force_line)
 
     def update_plot(self, is_success, reward):
 
@@ -114,7 +128,7 @@ class LoadCellVisualiser:
         self.curve_curr_l.setData(self.curr_l)
 
         self.curve_succ.setData(self.succ)
-        self.curve_rewa.setData(self.rewa)
+        self.curve_rewa.setData(self.rs)
 
         self.curve_currq_r.setData(self.currq_r)
         self.curve_currq_l.setData(self.currq_l)
