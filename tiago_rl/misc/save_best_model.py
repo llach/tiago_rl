@@ -20,15 +20,16 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
 
     def __init__(self, check_freq: int, save_path: str, mean_n=100, verbose=1,
-                 periodic_saving: int = 0, periodic_saving_offset: int = 0):
+                 periodic_saving: int = 0, periodic_saving_offset: int = 0, total_steps: int = 0):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.save_path = save_path
         self.best_mean_reward = -np.inf
         self.mean_n = mean_n
-        self.last_time = time.time()
+        self.start_time = time.time()
         self.ps = periodic_saving
         self.ps_off = periodic_saving_offset
+        self.total_steps = total_steps
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -56,4 +57,11 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     self.model.save(f'{self.save_path}/best_model')
                 else:
                     print("Best mean reward was: {:.2f}".format(self.best_mean_reward))
+
+                if self.total_steps > 0:
+                    time_elapsed = time.time() - self.start_time
+                    fps = int(self.num_timesteps / (time_elapsed + 1e-8))
+                    eta_m = int((self.total_steps - self.n_calls) / fps / 60)
+
+                    print(f"ETA {int(eta_m / 60)}:{eta_m % 60:02d} ||  FPS {fps}")
         return True
