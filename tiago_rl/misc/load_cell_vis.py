@@ -30,12 +30,17 @@ class LoadCellVisualiser:
         self.win.nextRow()
 
         self.pl_succ = self.win.addPlot(title="Success State")
-        self.pl_rewa = self.win.addPlot(title="Cumulative Reward")
+        self.pl_rewa = self.win.addPlot(title="Reward")
 
         self.win.nextRow()
 
         self.pl_q = self.win.addPlot(title="Joint Positions")
         self.pl_vel = self.win.addPlot(title="Joint Velocities")
+
+        self.win.nextRow()
+
+        self.pl_obj_lin_vel = self.win.addPlot(title="Linear Object Velocity")
+        self.pl_obj_ang_vel = self.win.addPlot(title="Angular Object Velocity")
 
         self.curve_raw_r = self.pl_raw.plot(pen='r')
         self.curve_raw_l = self.pl_raw.plot(pen='y')
@@ -54,6 +59,9 @@ class LoadCellVisualiser:
 
         self.curve_currv_r = self.pl_vel.plot(pen='g')
         self.curve_currv_l = self.pl_vel.plot(pen='b')
+
+        self.curve_obj_lin_vel = self.pl_obj_lin_vel.plot(pen='m')
+        self.curve_obj_ang_vel = self.pl_obj_ang_vel.plot(pen='w')
 
         self.threshold_line = pg.InfiniteLine(
             pos=env.force_threshold,
@@ -86,6 +94,9 @@ class LoadCellVisualiser:
         self.vel_l = []
 
         self.rs = []
+
+        self.obj_lin = []
+        self.obj_ang = []
 
     def reset(self, env):
         self.pl_raw.removeItem(self.target_force_line)
@@ -120,6 +131,11 @@ class LoadCellVisualiser:
         self.vel_r.append((jv['gripper_right_finger_joint']))
         self.vel_l.append((jv['gripper_left_finger_joint']))
 
+        obj_v = self.env.get_object_velocity()
+
+        self.obj_lin.append(np.linalg.norm(obj_v[0]))
+        self.obj_ang.append(np.linalg.norm(obj_v[1]))
+
         # plot new data
         self.curve_raw_r.setData(self.raw_r)
         self.curve_raw_l.setData(self.raw_l)
@@ -138,6 +154,9 @@ class LoadCellVisualiser:
 
         self.curve_currv_r.setData(self.vel_r)
         self.curve_currv_l.setData(self.vel_l)
+
+        self.curve_obj_lin_vel.setData(self.obj_lin)
+        self.curve_obj_ang_vel.setData(self.obj_ang)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux

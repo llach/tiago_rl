@@ -343,3 +343,7 @@ class BulletRobotEnv(gym.Env):
 
     def get_desired_q_dict(self):
         return dict(zip(self.joints, self.desired_pos))
+
+    def get_object_velocity(self):
+        if self.objectId:
+            return p.getBaseVelocity(self.objectId)
