@@ -43,6 +43,9 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.current_forces = np.array([0.0, 0.0])
         self.current_forces_raw = np.array([0.0, 0.0])
 
+        self.last_forces = np.array([0.0, 0.0])
+        self.last_forces_raw = np.array([0.0, 0.0])
+
         if self.force_type not in [RAW_FORCES, BINARY_FORCES]:
             print(f"unknown force type: {self.force_type}")
             exit(-1)
@@ -64,6 +67,10 @@ class LoadCellTactileEnv(BulletRobotEnv):
         joint_states = super(LoadCellTactileEnv, self)._get_obs()
 
         if self.objectId:
+            # store last forces
+            self.last_forces = self.current_forces.copy()
+            self.last_forces_raw = self.current_forces_raw.copy()
+
             # get current contact forces
             self.force_buffer_r.append(self._get_contact_force(self.robotId, self.objectId,
                                        self.robot_link_to_index['gripper_right_finger_link'],
@@ -105,7 +112,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
             return -np.sum(np.abs(delta_f))
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
-            return np.sum(is_goal)
+            derv_f = (np.abs((self.current_forces_raw - self.last_forces_raw) / self.dt) > 8).astype(np.int8)
+            return np.sum(is_goal)-np.sum(derv_f)
 
     def _reset_callback(self):
         if self.force_sampling_range:

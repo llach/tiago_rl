@@ -98,6 +98,9 @@ class LoadCellVisualiser:
         self.obj_lin = []
         self.obj_ang = []
 
+        self.dv_force_r = []
+        self.dv_force_l = []
+
     def reset(self, env):
         self.pl_raw.removeItem(self.target_force_line)
         self.target_force_line = pg.InfiniteLine(
@@ -135,6 +138,13 @@ class LoadCellVisualiser:
 
         self.obj_lin.append(np.linalg.norm(obj_v[0]))
         self.obj_ang.append(np.linalg.norm(obj_v[1]))
+
+        if len(self.dv_force_l) == 0:
+            self.dv_force_l.append(0)
+            self.dv_force_r.append(0)
+        else:
+            self.dv_force_r.append((self.raw_r[-2]-self.raw_r[-1])/self.env.dt)
+            self.dv_force_l.append((self.raw_l[-2]-self.raw_l[-1])/self.env.dt)
 
         # plot new data
         self.curve_raw_r.setData(self.raw_r)
