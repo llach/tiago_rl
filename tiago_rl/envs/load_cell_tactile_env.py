@@ -112,7 +112,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
             return -np.sum(np.abs(delta_f))
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
-            derv_f = (np.abs((self.current_forces_raw - self.last_forces_raw) / self.dt) > 8).astype(np.int8)
+            derv_f = (np.abs((self.current_forces_raw - self.last_forces_raw) / self.dt) > 35).astype(np.int8)
             return np.sum(is_goal)-np.sum(derv_f)
 
     def _reset_callback(self):
