@@ -62,7 +62,12 @@ class BulletRobotEnv(gym.Env):
 
         # current state
         self.current_pos = initial_state
-        self.current_vel = self.num_joints*[0.0]
+        self.current_vel = np.array(self.num_joints*[0.0])
+        self.current_acc = np.array(self.num_joints*[0.0])
+
+        self.last_pos = initial_state
+        self.last_vel = np.array(self.num_joints*[0.0])
+        self.last_acc = np.array(self.num_joints*[0.0])
 
         self.desired_pos = self.current_pos
 
@@ -98,6 +103,10 @@ class BulletRobotEnv(gym.Env):
         return [seed]
 
     def step(self, action):
+        self.last_pos = self.current_pos.copy()
+        self.last_vel = self.current_vel.copy()
+        self.last_acc = self.current_acc.copy()
+
         if np.any(np.isnan(action)):
             print(f"action has NaNs: {action}")
         else:
@@ -108,6 +117,7 @@ class BulletRobotEnv(gym.Env):
         self._step_callback()
 
         self.current_pos, self.current_vel = self._get_joint_states()
+        self.current_acc = (self.last_vel-self.current_vel)/self.dt
 
         obs = self._get_obs()
         reward = self._compute_reward()
@@ -324,7 +334,7 @@ class BulletRobotEnv(gym.Env):
         for js in p.getJointStates(self.robotId, [self.jn2Idx[jn] for jn in self.joints]):
             pos.append(js[0])
             vel.append(js[1])
-        return pos, vel
+        return np.array(pos), np.array(vel)
 
     def create_desired_state(self, des_qs):
         """Creates a complete desired joint state from a partial one.
