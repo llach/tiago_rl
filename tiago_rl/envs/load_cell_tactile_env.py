@@ -20,7 +20,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
                  target_forces=None, force_threshold=None, force_type=None, reward_type=None,
-                 force_sampling_range=None, *args, **kwargs):
+                 force_sampling_range=None, acceleration_penalty=None, force_delta_penalty=None,
+                 *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
         self.force_noise_mu = force_noise_mu or 0.0
@@ -30,6 +31,9 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
+
+        self.acceleration_penalty = acceleration_penalty
+        self.force_delta_penalty = force_delta_penalty
 
         if target_forces is not None:
             self.target_forces = np.array(target_forces)
@@ -112,8 +116,18 @@ class LoadCellTactileEnv(BulletRobotEnv):
             return -np.sum(np.abs(delta_f))
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
-            accel_penalty = (np.abs(self.current_acc) > 2).astype(np.int8)
-            return np.sum(is_goal)-np.sum(accel_penalty)
+
+            if self.acceleration_penalty:
+                acc_penalty = np.array(np.abs(self.current_acc) > self.acceleration_penalty).astype(np.int8)
+            else:
+                acc_penalty = np.array([0.0, 0.0])
+
+            if self.force_delta_penalty:
+                fd_penalty = np.array(np.abs((self.current_forces_raw - self.last_forces_raw) / self.dt) > self.force_delta_penalty).astype(np.int8)
+            else:
+                fd_penalty = np.array([0.0, 0.0])
+
+            return np.sum(is_goal)-np.sum(acc_penalty)-np.sum(fd_penalty)
 
     def _reset_callback(self):
         if self.force_sampling_range:
