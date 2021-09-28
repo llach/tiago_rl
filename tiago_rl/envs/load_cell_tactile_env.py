@@ -144,7 +144,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
             'gripper_left_finger_joint',
         ]
 
-        initial_state = initial_state or [
+        initial_state = initial_state if initial_state is not None else [
             0.045,
             0.045,
         ]

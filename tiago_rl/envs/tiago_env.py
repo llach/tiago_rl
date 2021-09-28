@@ -17,7 +17,7 @@ class TIAGoPALGripperEnv(BulletRobotEnv):
             'gripper_left_finger_joint',
         ]
 
-        initial_state = initial_state or [
+        initial_state = initial_state if initial_state is not None else [
             0.,
             2.71,
             -0.173,

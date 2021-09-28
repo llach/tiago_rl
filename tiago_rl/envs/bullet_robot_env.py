@@ -22,7 +22,7 @@ class BulletRobotEnv(gym.Env):
     This code's starting point was the MuJoCo-based robotics environment from gym:
     https://github.com/openai/gym/blob/master/gym/envs/robotics/robot_env.py
     """
-    def __init__(self, initial_state, joints, n_actions=None, dt=1./240., show_gui=False, control_mode='vel',
+    def __init__(self, initial_state, joints, n_actions=None, show_gui=False, control_mode='vel',
                  cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None, max_joint_velocities=None,
                  robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
 
@@ -53,7 +53,7 @@ class BulletRobotEnv(gym.Env):
             self.client_id = p.connect(p.DIRECT)
         self.show_gui = show_gui
 
-        self.dt = dt
+        self.dt = 0.0
         self.joints = joints
         self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
@@ -233,8 +233,16 @@ class BulletRobotEnv(gym.Env):
     def _step_sim(self):
         """Steps one timestep.
         """
+        start = time.time()
         p.stepSimulation()
-        time.sleep(self.dt)
+
+        # according to the pyBullet quickstart guide, this value shouldn't be changed as
+        # they've tuned other parameters based on the timestep.
+        # however, I'm still not sure why we need to wait here ourselves.
+        time.sleep(1./240.)
+
+        # dynamically keep track of sim time
+        self.dt = time.time() - start
 
     def _set_action(self, action):
         """Applies the given action to the simulation.
@@ -247,7 +255,7 @@ class BulletRobotEnv(gym.Env):
                 if self.control_mode == POS_CTRL:
                     self._set_desired_q(ji, des_q)
                 elif self.control_mode == VEL_CTRL:
-                    self._set_desired_q(ji, self.current_pos[i]+des_q)
+                    self._set_desired_q(ji, self.current_pos[i]+10*(des_q*self.dt))
         else:
             print("Environment has no joints specified!")
 
