@@ -54,7 +54,7 @@ class BulletRobotEnv(gym.Env):
             self.client_id = p.connect(p.DIRECT)
         self.show_gui = show_gui
 
-        self.dt = 0.0
+        self.dt = 1./240. # don't change; pybullet is tuned for this value
         self.joints = joints
         self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
@@ -234,16 +234,7 @@ class BulletRobotEnv(gym.Env):
     def _step_sim(self):
         """Steps one timestep.
         """
-        start = time.time()
         p.stepSimulation()
-
-        # according to the pyBullet quickstart guide, this value shouldn't be changed as
-        # they've tuned other parameters based on the timestep.
-        # however, I'm still not sure why we need to wait here ourselves.
-        time.sleep(1./240.)
-
-        # dynamically keep track of sim time
-        self.dt = time.time() - start
 
     def _set_action(self, action):
         """Applies the given action to the simulation.
