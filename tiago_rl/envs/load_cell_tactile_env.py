@@ -158,6 +158,10 @@ class GripperTactileEnv(LoadCellTactileEnv):
             kwargs.update({
                 'object_pos': [0.04, 0.02, 0.6]
             })
+        if 'object_model' not in kwargs:
+            kwargs.update({
+                'object_model': "objects/object.urdf"
+            })
 
         LoadCellTactileEnv.__init__(self,
                                     joints=joints,
@@ -169,7 +173,6 @@ class GripperTactileEnv(LoadCellTactileEnv):
                                     cam_target_position=(-0.2751278877258301, -0.15310688316822052, -0.27969369292259216),
                                     robot_model="gripper_tactile.urdf",
                                     robot_pos=[0.0, 0.0, 0.27],
-                                    object_model="objects/object.urdf",
                                     *args,
                                     **kwargs)
 
