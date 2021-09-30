@@ -245,9 +245,15 @@ class BulletRobotEnv(gym.Env):
             for i, [jn, des_q] in enumerate(zip(self.joints, action)):
                 ji = self.jn2Idx[jn]
                 if self.control_mode == POS_CTRL:
-                    self._set_desired_q(ji, des_q)
+                    p.setJointMotorControl2(bodyUniqueId=self.robotId,
+                                            jointIndex=ji,
+                                            controlMode=p.POSITION_CONTROL,
+                                            targetPosition=des_q)
                 elif self.control_mode == VEL_CTRL:
-                    self._set_desired_q(ji, self.current_pos[i]+10*(des_q*self.dt))
+                    p.setJointMotorControl2(bodyUniqueId=self.robotId,
+                                            jointIndex=ji,
+                                            controlMode=p.VELOCITY_CONTROL,
+                                            targetVelocity=des_q)
         else:
             print("Environment has no joints specified!")
 
