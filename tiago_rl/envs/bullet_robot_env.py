@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import numpy as np
 
@@ -181,7 +182,7 @@ class BulletRobotEnv(gym.Env):
         p.loadURDF("plane.urdf", basePosition=[0.0, 0.0, -0.01])
 
         # set asset directory to local asset directory
-        p.setAdditionalSearchPath(os.path.join(os.path.dirname(__file__), '../assets', ))
+        p.setAdditionalSearchPath(os.path.join(sys.modules['tiago_rl'].__path__[0], 'assets', ))
 
         if not self.robot_model:
             print("Robot model path missing!")
