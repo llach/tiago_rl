@@ -5,6 +5,8 @@ import pyqtgraph as pg
 
 import platform
 
+from tiago_rl.envs.bullet_robot_env import POS_CTRL, VEL_CTRL
+
 
 class LoadCellVisualiser:
 
@@ -27,20 +29,74 @@ class LoadCellVisualiser:
         self.pl_raw = self.win.addPlot(title="Raw Contact Forces")
         self.pl_curr = self.win.addPlot(title="Processed Contact Forces")
 
-        self.win.nextRow()
+        # draw lines at threshold force and target force
+        for pl in [self.pl_curr, self.pl_raw]:
+            threshold_line = pg.InfiniteLine(
+                pos=env.force_threshold,
+                angle=0
+            )
+            target_line = pg.InfiniteLine(
+                pos=env.target_forces[0],
+                angle=0
+            )
+            pl.addItem(threshold_line)
+            pl.addItem(target_line)
 
-        self.pl_succ = self.win.addPlot(title="Success State")
-        self.pl_rewa = self.win.addPlot(title="Reward")
+            # always show target force in ticks
+            ay = pl.getAxis('left')
+            ticks = [0, env.target_forces[0]]
+            ay.setTicks([[(v, str(v)) for v in ticks]])
 
         self.win.nextRow()
 
         self.pl_q = self.win.addPlot(title="Joint Positions")
         self.pl_vel = self.win.addPlot(title="Joint Velocities")
 
+        # joint position range with some padding
+        self.pl_q.setYRange(0.05, -0.005)
+
+        # set ticks at fully open, middle and fully closed
+        ay = self.pl_q.getAxis('left')
+        ticks = [0.045, 0.02, 0.0]
+        ay.setTicks([[(v, str(v)) for v in ticks]])
+
+        # draw velocity maximums, set range and ticks
+        if env.max_joint_velocities:
+            self.max_vel = np.abs(list(env.max_joint_velocities.values())[0])
+
+            max_line = pg.InfiniteLine(
+                pos=self.max_vel,
+                angle=0
+            )
+            neg_max_line = pg.InfiniteLine(
+                pos=-self.max_vel,
+                angle=0
+            )
+
+            self.pl_vel.addItem(max_line)
+            self.pl_vel.addItem(neg_max_line)
+
+            self.pl_vel.setYRange(-self.max_vel * 1.1, self.max_vel * 1.1)
+
+            ay = self.pl_vel.getAxis('left')
+            ticks = [-self.max_vel, 0, self.max_vel]
+            ay.setTicks([[(v, str(v)) for v in ticks]])
+
+
         self.win.nextRow()
 
         self.pl_obj_lin_vel = self.win.addPlot(title="Linear Object Velocity")
         self.pl_obj_ang_vel = self.win.addPlot(title="Angular Object Velocity")
+
+        self.pl_obj_lin_vel.setYRange(-0.02, 0.2)
+        self.pl_obj_ang_vel.setYRange(-0.5, 3)
+
+        self.win.nextRow()
+
+        self.pl_succ = self.win.addPlot(title="Success State")
+        self.pl_rewa = self.win.addPlot(title="Reward")
+
+        self.pl_succ.setYRange(-0.2, 1.2)
 
         self.curve_raw_r = self.pl_raw.plot(pen='r')
         self.curve_raw_l = self.pl_raw.plot(pen='y')
@@ -51,29 +107,21 @@ class LoadCellVisualiser:
         self.curve_succ = self.pl_succ.plot(pen='g')
         self.curve_rewa = self.pl_rewa.plot(pen='b')
 
-        self.curve_des_r = self.pl_q.plot(pen='r')
-        self.curve_des_l = self.pl_q.plot(pen='y')
+        self.curve_currv_r = self.pl_vel.plot(pen='g')
+        self.curve_currv_l = self.pl_vel.plot(pen='b')
+
+        if env.control_mode == POS_CTRL:
+            self.curve_des_r = self.pl_q.plot(pen='c')
+            self.curve_des_l = self.pl_q.plot(pen='y')
+        elif env.control_mode == VEL_CTRL:
+            self.curve_des_r = self.pl_vel.plot(pen='c')
+            self.curve_des_l = self.pl_vel.plot(pen='y')
 
         self.curve_currq_r = self.pl_q.plot(pen='g')
         self.curve_currq_l = self.pl_q.plot(pen='b')
 
-        self.curve_currv_r = self.pl_vel.plot(pen='g')
-        self.curve_currv_l = self.pl_vel.plot(pen='b')
-
         self.curve_obj_lin_vel = self.pl_obj_lin_vel.plot(pen='m')
         self.curve_obj_ang_vel = self.pl_obj_ang_vel.plot(pen='w')
-
-        self.threshold_line = pg.InfiniteLine(
-            pos=env.force_threshold,
-            angle=0
-        )
-        self.pl_raw.addItem(self.threshold_line)
-
-        self.target_force_line = pg.InfiniteLine(
-            pos=env.target_forces[0],
-            angle=0
-        )
-        self.pl_raw.addItem(self.target_force_line)
 
         # buffers for plotted data
         self.raw_r = []
@@ -87,6 +135,7 @@ class LoadCellVisualiser:
 
         self.des_r = []
         self.des_l = []
+
         self.currq_r = []
         self.currq_l = []
 
@@ -170,8 +219,8 @@ class LoadCellVisualiser:
         self.curve_des_r.setData(self.des_r)
         self.curve_des_l.setData(self.des_l)
 
-        self.curve_currv_r.setData(self.accel_r)
-        self.curve_currv_l.setData(self.accel_l)
+        self.curve_currv_r.setData(self.vel_r)
+        self.curve_currv_l.setData(self.vel_l)
 
         self.curve_obj_lin_vel.setData(self.obj_lin)
         self.curve_obj_ang_vel.setData(self.obj_ang)
