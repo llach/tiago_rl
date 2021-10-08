@@ -29,18 +29,15 @@ class LoadCellVisualiser:
         self.pl_raw = self.win.addPlot(title="Raw Contact Forces")
         self.pl_curr = self.win.addPlot(title="Processed Contact Forces")
 
+        self._add_target_force_lines()
+
         # draw lines at threshold force and target force
         for pl in [self.pl_curr, self.pl_raw]:
             threshold_line = pg.InfiniteLine(
                 pos=env.force_threshold,
                 angle=0
             )
-            target_line = pg.InfiniteLine(
-                pos=env.target_forces[0],
-                angle=0
-            )
             pl.addItem(threshold_line)
-            pl.addItem(target_line)
 
             # always show target force in ticks
             ay = pl.getAxis('left')
@@ -153,13 +150,24 @@ class LoadCellVisualiser:
         self.accel_r = []
         self.accel_l = []
 
-    def reset(self, env):
-        self.pl_raw.removeItem(self.target_force_line)
-        self.target_force_line = pg.InfiniteLine(
-            pos=env.target_forces[0],
+    def _add_target_force_lines(self):
+        self.raw_target_line = pg.InfiniteLine(
+            pos=self.env.target_forces[0],
             angle=0
-        )
-        self.pl_raw.addItem(self.target_force_line)
+            )
+        self.pl_raw.addItem(self.raw_target_line)
+
+        self.curr_target_line = pg.InfiniteLine(
+                pos=self.env.target_forces[0],
+                angle=0
+            )
+        self.pl_curr.addItem(self.curr_target_line)
+
+    def reset(self):
+        self.pl_raw.removeItem(self.raw_target_line)
+        self.pl_curr.removeItem(self.curr_target_line)
+
+        self._add_target_force_lines()
 
     def update_plot(self, is_success, reward):
 
