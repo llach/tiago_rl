@@ -70,7 +70,11 @@ class BulletRobotEnv(gym.Env):
         self.last_vel = np.array(self.num_joints*[0.0])
         self.last_acc = np.array(self.num_joints*[0.0])
 
-        self.desired_pos = self.current_pos
+        self.desired_action = np.array(self.num_joints*[0.0])
+        self.desired_action_clip = np.array(self.num_joints*[0.0])
+
+        self.uli = 0.045
+        self.lli = 0.0
 
         # needs to be set by child environment
         self.robotId = None  # sim ID of robot model
@@ -239,23 +243,43 @@ class BulletRobotEnv(gym.Env):
     def _set_action(self, action):
         """Applies the given action to the simulation.
         """
-        self.desired_pos = action.copy()
+        self.desired_action = action.copy()
+
+        # clipping actions is encouraged in the pybullet docs even though we have limits set in the simulation
+        self._clip_actions()
 
         if self.joints:
-            for i, [jn, des_q] in enumerate(zip(self.joints, action)):
+            for i, [jn, act] in enumerate(zip(self.joints, self.desired_action_clip)):
                 ji = self.jn2Idx[jn]
                 if self.control_mode == POS_CTRL:
                     p.setJointMotorControl2(bodyUniqueId=self.robotId,
                                             jointIndex=ji,
                                             controlMode=p.POSITION_CONTROL,
-                                            targetPosition=des_q)
+                                            targetPosition=act)
                 elif self.control_mode == VEL_CTRL:
                     p.setJointMotorControl2(bodyUniqueId=self.robotId,
                                             jointIndex=ji,
                                             controlMode=p.VELOCITY_CONTROL,
-                                            targetVelocity=des_q)
+                                            targetVelocity=act)
         else:
             print("Environment has no joints specified!")
+
+    def _clip_actions(self):
+        if self.control_mode == POS_CTRL:
+            # this clipping is not velocity-sensitive as we don't want to mess with the internal PI controller of bullet
+            # previous experiments have proven for it to not reach the target if too small position deltas are set
+            self.desired_action_clip =  np.clip(self.desired_action, self.lli, self.uli)
+
+        elif self.control_mode == VEL_CTRL:
+
+            # this clips velocities only and ignores current position
+            for i, [jn, act] in enumerate(zip(self.joints, self.desired_action)):
+                if jn in self.max_joint_velocities:
+                    mv = self.max_joint_velocities[jn]
+                    self.desired_action_clip[i] = np.clip(act, -mv, mv)
+
+                else:
+                    print(f"no velocity limit given for joint {jn}. won't clip.")
 
     def _get_obs(self):
         """Returns the observation.
@@ -302,17 +326,13 @@ class BulletRobotEnv(gym.Env):
                 for j, max_vel in self.max_joint_velocities.items():
                     p.changeDynamics(bodyUniqueId=self.robotId,
                                      linkIndex=self.jn2Idx[j],
-                                     maxJointVelocity=max_vel)
+                                     maxJointVelocity=max_vel,
+                                     jointLowerLimit=0.0,
+                                     jointUpperLimit=0.045)
 
     def _set_joint_pos(self, joint_idx, joint_pos):
         if self.robotId:
             p.resetJointState(self.robotId, joint_idx, joint_pos)
-
-    def _set_desired_q(self, joint_idx, des_q):
-        p.setJointMotorControl2(bodyUniqueId=self.robotId,
-                                jointIndex=joint_idx,
-                                controlMode=p.POSITION_CONTROL,
-                                targetPosition=des_q)
 
     def _calculate_force(self, contacts):
         if not contacts:
@@ -345,7 +365,7 @@ class BulletRobotEnv(gym.Env):
     def create_desired_state(self, des_qs):
         """Creates a complete desired joint state from a partial one.
         """
-        ds = self.desired_pos.copy()
+        ds = self.desired_action.copy()
 
         for jn, des_q in des_qs.items():
             if jn not in self.joints:
@@ -358,7 +378,7 @@ class BulletRobotEnv(gym.Env):
         return dict(zip(self.joints, self.current_pos)), dict(zip(self.joints, self.current_vel))
 
     def get_desired_q_dict(self):
-        return dict(zip(self.joints, self.desired_pos))
+        return dict(zip(self.joints, self.desired_action))
 
     def get_object_velocity(self):
         if self.objectId:
