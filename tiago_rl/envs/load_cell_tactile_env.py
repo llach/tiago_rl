@@ -21,6 +21,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
                  target_forces=None, force_threshold=None, force_type=None, reward_type=None,
                  force_sampling_range=None, acceleration_penalty=None, force_delta_penalty=None,
+                 velocity_rew_coef=0.0, object_velocity_rew_coef=0.0,
                  *args, **kwargs):
 
         self.force_smoothing = force_smoothing or 4
@@ -34,6 +35,9 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.acceleration_penalty = acceleration_penalty
         self.force_delta_penalty = force_delta_penalty
+
+        self.velocity_rew_coef = velocity_rew_coef
+        self.object_velocity_rew_coef = object_velocity_rew_coef
 
         if target_forces is not None:
             self.target_forces = np.array(target_forces)
@@ -49,6 +53,12 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.last_forces = np.array([0.0, 0.0])
         self.last_forces_raw = np.array([0.0, 0.0])
+
+        self.force_rew = -100
+        self.vel_rew = -100
+        self.obj_vel_rew = -100
+
+        self.rew = -100
 
         if self.force_type not in [RAW_FORCES, BINARY_FORCES]:
             print(f"unknown force type: {self.force_type}")
@@ -112,8 +122,17 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
     def _compute_reward(self):
         if self.reward_type == CONT_REWARDS:
+            # reward for force delta minimization
             delta_f = force_delta(self.current_forces_raw, self.target_forces)
-            return -np.sum(np.abs(delta_f))
+            self.force_rew = -np.sum(np.abs(delta_f))
+
+            self.vel_rew = -self.velocity_rew_coef * np.sum(np.abs(self.current_vel))
+
+            obj_v = self.get_object_velocity()
+            self.obj_vel_rew = -self.object_velocity_rew_coef * np.abs(np.linalg.norm(obj_v[0]))
+
+            self.rew = self.force_rew + self.vel_rew
+            return self.rew
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
 
