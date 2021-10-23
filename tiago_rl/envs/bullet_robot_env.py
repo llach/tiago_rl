@@ -58,8 +58,10 @@ class BulletRobotEnv(gym.Env):
         self.joints = joints
         self.num_joints = len(joints)
         self.initial_state = list(zip(self.joints, initial_state))
-        self.max_joint_velocities = {} or max_joint_velocities
+        self.max_joint_velocities = max_joint_velocities
         self.n_actions = n_actions or len(joints)
+
+        self.total_max_vel = np.sum(np.abs(list(self.max_joint_velocities.values())))
 
         # current state
         self.current_pos = initial_state
