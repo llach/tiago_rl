@@ -131,7 +131,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
             obj_v = self.get_object_velocity()
             self.obj_vel_rew = -self.object_velocity_rew_coef * np.abs(np.linalg.norm(obj_v[0]))
 
-            self.rew = self.force_rew + self.vel_rew
+            self.rew = self.force_rew + self.vel_rew + self.obj_vel_rew
             return self.rew
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
@@ -151,7 +151,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
     def _reset_callback(self):
         if self.force_sampling_range:
             assert len(self.force_sampling_range) == 2
-            self.target_forces = np.full((2,), np.random.uniform(*self.force_sampling_range))
+            self.target_forces = np.around(np.full((2,), np.random.uniform(*self.force_sampling_range)), 3)
 
 
 class GripperTactileEnv(LoadCellTactileEnv):
