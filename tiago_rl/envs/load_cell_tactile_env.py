@@ -147,8 +147,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
                 self.vel_rew = 0.0
 
             if self.object_velocity_rew_coef is not None:
-                obj_v = self.get_object_velocity()
-                self.obj_vel_rew = -self.object_velocity_rew_coef * np.abs(np.linalg.norm(obj_v[0]))
+                obj_v = np.abs(np.linalg.norm(self.get_object_velocity()[0]))
+                self.obj_vel_rew = -map_in_range(obj_v, 0.18, self.object_velocity_rew_coef*self.fmax)
             else:
                 self.obj_vel_rew = 0.0
 
