@@ -45,6 +45,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
         self.force_buffer_l = deque(maxlen=self.force_smoothing)
 
+        self.success_threshold = 5 * self.force_noise_sigma
+
         self.acceleration_penalty = acceleration_penalty
         self.force_delta_penalty = force_delta_penalty
 
@@ -132,7 +134,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
         not have access too. We assume that that behavior would be more confusing for an agent than it would be helpful.
         """
         delta_f = force_delta(self.current_forces_raw, self.target_forces)
-        return np.all((np.abs(delta_f) < self.force_threshold)).astype(np.float32)
+        return np.all((np.abs(delta_f) < self.success_threshold)).astype(np.float32)
 
     def _compute_reward(self):
         if self.reward_type == CONT_REWARDS:
