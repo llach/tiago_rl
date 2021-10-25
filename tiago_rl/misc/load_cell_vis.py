@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 
 import platform
@@ -24,6 +24,9 @@ class LoadCellVisualiser:
 
         # enable antialiasing for prettier plots
         pg.setConfigOptions(antialias=True)
+
+        # update counter
+        self.t = 0
 
         # create plots and curves
         self.pl_raw = self.win.addPlot(title="Raw Contact Forces")
@@ -89,6 +92,10 @@ class LoadCellVisualiser:
         self.pl_rewa = self.win.addPlot(title="Reward")
 
         self.pl_succ.setYRange(-0.2, 1.2)
+
+        self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
+                          self.pl_obj_ang_vel, self.pl_q, self.pl_vel,
+                          self.pl_raw, self.pl_curr]
 
         self.curve_raw_r = self.pl_raw.plot(pen='r')
         self.curve_raw_l = self.pl_raw.plot(pen='y')
@@ -170,7 +177,20 @@ class LoadCellVisualiser:
 
         self._add_target_force_lines()
 
+        for pl in self.all_plots:
+            if self.t == 0:
+                break
+            pl.addItem(
+                pg.InfiniteLine(
+                    pos=self.t,
+                    pen={'color': "#D3D3D3", 'width': 1.5,
+                         'style': QtCore.Qt.DotLine},
+                    angle=90
+                )
+            )
+
     def update_plot(self, is_success, reward):
+        self.t += 1
 
         # store new data
         self.raw_r.append(self.env.current_forces_raw[0])
