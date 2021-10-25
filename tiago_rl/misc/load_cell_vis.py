@@ -31,18 +31,13 @@ class LoadCellVisualiser:
 
         self._add_target_force_lines()
 
-        # draw lines at threshold force and target force
+        # draw lines at threshold force
         for pl in [self.pl_curr, self.pl_raw]:
             threshold_line = pg.InfiniteLine(
                 pos=env.force_threshold,
                 angle=0
             )
             pl.addItem(threshold_line)
-
-            # always show target force in ticks
-            ay = pl.getAxis('left')
-            ticks = [0, env.target_forces[0]]
-            ay.setTicks([[(v, str(v)) for v in ticks]])
 
         self.win.nextRow()
 
@@ -135,7 +130,6 @@ class LoadCellVisualiser:
 
         self.currq_r = []
         self.currq_l = []
-
         self.vel_r = []
         self.vel_l = []
 
@@ -151,17 +145,24 @@ class LoadCellVisualiser:
         self.accel_l = []
 
     def _add_target_force_lines(self):
+        tf = self.env.target_forces[0]
         self.raw_target_line = pg.InfiniteLine(
-            pos=self.env.target_forces[0],
+            pos=tf,
             angle=0
-            )
-        self.pl_raw.addItem(self.raw_target_line)
-
+        )
         self.curr_target_line = pg.InfiniteLine(
-                pos=self.env.target_forces[0],
-                angle=0
-            )
-        self.pl_curr.addItem(self.curr_target_line)
+            pos=tf,
+            angle=0
+        )
+
+        for pl, ln in zip([self.pl_raw, self.pl_curr],
+                          [self.raw_target_line, self.curr_target_line]):
+            pl.addItem(ln)
+
+            # always show target force in ticks
+            ay = pl.getAxis('left')
+            ticks = [0, tf]
+            ay.setTicks([[(v, str(v)) for v in ticks]])
 
     def reset(self):
         self.pl_raw.removeItem(self.raw_target_line)
