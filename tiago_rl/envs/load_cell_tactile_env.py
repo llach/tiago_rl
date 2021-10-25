@@ -144,7 +144,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
             if self.velocity_rew_coef is not None:
                 total_vel = np.sum(np.abs(self.current_vel))
-                self.vel_rew = -map_in_range(total_vel, self.total_max_vel, self.velocity_rew_coef*self.fmax)
+                self.vel_rew = -map_in_range(total_vel, self.total_max_vel, 2*self.velocity_rew_coef*self.fmax)
             else:
                 self.vel_rew = 0.0
 
