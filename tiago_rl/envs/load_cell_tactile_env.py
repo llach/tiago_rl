@@ -36,10 +36,10 @@ class LoadCellTactileEnv(BulletRobotEnv):
                  velocity_rew_coef=None, object_velocity_rew_coef=None,
                  *args, **kwargs):
 
-        self.force_smoothing = force_smoothing or 4
-        self.force_noise_mu = force_noise_mu or 0.0
-        self.force_noise_sigma = force_noise_sigma or 0.0077
-        self.force_threshold = force_threshold or 3 * self.force_noise_sigma
+        self.force_smoothing = force_smoothing if force_smoothing is not None else 4
+        self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
+        self.force_noise_sigma = force_noise_sigma if force_noise_sigma is not None else 0.0077
+        self.force_threshold = force_threshold if force_threshold is not None else 3 * self.force_noise_sigma
         self.force_sampling_range = force_sampling_range
 
         self.force_buffer_r = deque(maxlen=self.force_smoothing)
