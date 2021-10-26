@@ -32,9 +32,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
                  target_forces=None, force_threshold=None, force_type=None, reward_type=None,
-                 force_sampling_range=None, acceleration_penalty=None, force_delta_penalty=None,
-                 velocity_rew_coef=None, object_velocity_rew_coef=None,
-                 *args, **kwargs):
+                 force_sampling_range=None, velocity_rew_coef=None, object_velocity_rew_coef=None,
+                 accel_rew_coef=None, *args, **kwargs):
 
         self.force_smoothing = force_smoothing if force_smoothing is not None else 4
         self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
@@ -47,9 +46,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.success_threshold = 5 * self.force_noise_sigma
 
-        self.acceleration_penalty = acceleration_penalty
-        self.force_delta_penalty = force_delta_penalty
-
+        self.accel_rew_coef = accel_rew_coef
         self.velocity_rew_coef = velocity_rew_coef
         self.object_velocity_rew_coef = object_velocity_rew_coef
 
@@ -72,6 +69,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.force_rew = -100
         self.vel_rew = -100
+        self.accel_rew = -100
         self.obj_vel_rew = -100
 
         self.rew = -100
@@ -85,6 +83,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
             exit(-1)
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
+
+        self.vmax = np.abs(list(self.max_joint_velocities.values())[0])
 
     # BulletRobotEnv methods
     # ----------------------------
@@ -149,13 +149,19 @@ class LoadCellTactileEnv(BulletRobotEnv):
             else:
                 self.vel_rew = 0.0
 
+            if self.accel_rew_coef is not None:
+                total_acc = np.sum(np.abs(self.current_acc))
+                self.accel_rew = -map_in_range(total_acc, 2*self.vmax, self.accel_rew_coef)
+            else:
+                self.accel_rew = 0.0
+
             if self.object_velocity_rew_coef is not None:
                 obj_v = np.abs(np.linalg.norm(self.get_object_velocity()[0]))
                 self.obj_vel_rew = -map_in_range(obj_v, 0.18, self.object_velocity_rew_coef)
             else:
                 self.obj_vel_rew = 0.0
 
-            self.rew = self.force_rew + self.vel_rew + self.obj_vel_rew
+            self.rew = self.force_rew + self.vel_rew + self.obj_vel_rew + self.accel_rew
             return self.rew
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
