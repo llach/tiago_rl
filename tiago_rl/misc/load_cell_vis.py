@@ -77,14 +77,13 @@ class LoadCellVisualiser:
             ticks = [-self.max_vel, 0, self.max_vel]
             ay.setTicks([[(v, str(v)) for v in ticks]])
 
-
         self.win.nextRow()
 
         self.pl_obj_lin_vel = self.win.addPlot(title="Linear Object Velocity")
-        self.pl_obj_ang_vel = self.win.addPlot(title="Angular Object Velocity")
+        self.pl_joint_acc = self.win.addPlot(title="Joint Accelerations")
 
         self.pl_obj_lin_vel.setYRange(-0.02, 0.2)
-        self.pl_obj_ang_vel.setYRange(-0.5, 3)
+        self.pl_joint_acc.setYRange(-2.2*self.max_vel, 2.2*self.max_vel)
 
         self.win.nextRow()
 
@@ -94,7 +93,7 @@ class LoadCellVisualiser:
         self.pl_succ.setYRange(-0.2, 1.2)
 
         self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
-                          self.pl_obj_ang_vel, self.pl_q, self.pl_vel,
+                          self.pl_joint_acc, self.pl_q, self.pl_vel,
                           self.pl_raw, self.pl_curr]
 
         self.curve_raw_r = self.pl_raw.plot(pen='r')
@@ -120,7 +119,9 @@ class LoadCellVisualiser:
         self.curve_currq_l = self.pl_q.plot(pen='b')
 
         self.curve_obj_lin_vel = self.pl_obj_lin_vel.plot(pen='m')
-        self.curve_obj_ang_vel = self.pl_obj_ang_vel.plot(pen='w')
+
+        self.curve_acc_r = self.pl_joint_acc.plot(pen='r')
+        self.curve_acc_l = self.pl_joint_acc.plot(pen='y')
 
         # buffers for plotted data
         self.raw_r = []
@@ -252,7 +253,9 @@ class LoadCellVisualiser:
         self.curve_currv_l.setData(self.vel_l)
 
         self.curve_obj_lin_vel.setData(self.obj_lin)
-        self.curve_obj_ang_vel.setData(self.obj_ang)
+
+        self.curve_acc_r.setData(self.accel_r)
+        self.curve_acc_l.setData(self.accel_l)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux

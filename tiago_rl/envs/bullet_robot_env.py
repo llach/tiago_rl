@@ -124,7 +124,7 @@ class BulletRobotEnv(gym.Env):
         self._step_callback()
 
         self.current_pos, self.current_vel = self._get_joint_states()
-        self.current_acc = (self.last_vel-self.current_vel)/self.dt
+        self.current_acc = (self.last_vel-self.current_vel)
 
         obs = self._get_obs()
         reward = self._compute_reward()
