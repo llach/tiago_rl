@@ -270,7 +270,7 @@ class BulletRobotEnv(gym.Env):
         if self.control_mode == POS_CTRL:
             # this clipping is not velocity-sensitive as we don't want to mess with the internal PI controller of bullet
             # previous experiments have proven for it to not reach the target if too small position deltas are set
-            self.desired_action_clip =  np.clip(self.desired_action, self.lli, self.uli)
+            self.desired_action_clip = np.clip(self.desired_action, self.lli, self.uli)
 
         elif self.control_mode == VEL_CTRL:
 
@@ -351,9 +351,9 @@ class BulletRobotEnv(gym.Env):
                                      linkIndexA=linkA,
                                      linkIndexB=linkB)
             f_raw = self._calculate_force(cps)
-            return self._transform_forces(f_raw)
+            return self._transform_forces(f_raw), f_raw > 0.0
         else:
-            return 0.0
+            return 0.0, False
 
     def _get_joint_states(self):
         pos = []

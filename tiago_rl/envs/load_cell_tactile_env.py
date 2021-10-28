@@ -67,6 +67,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.last_forces = np.array([0.0, 0.0])
         self.last_forces_raw = np.array([0.0, 0.0])
 
+        self.in_contact = np.array([False, False])
+
         self.force_rew = -100
         self.vel_rew = -100
         self.accel_rew = -100
@@ -102,12 +104,17 @@ class LoadCellTactileEnv(BulletRobotEnv):
             self.last_forces_raw = self.current_forces_raw.copy()
 
             # get current contact forces
-            self.force_buffer_r.append(self._get_contact_force(self.robotId, self.objectId,
-                                       self.robot_link_to_index['gripper_right_finger_link'],
-                                       self.object_link_to_index['object_link']))
-            self.force_buffer_l.append(self._get_contact_force(self.robotId, self.objectId,
-                                       self.robot_link_to_index['gripper_left_finger_link'],
-                                       self.object_link_to_index['object_link']))
+            f_r, contact_r = self._get_contact_force(self.robotId, self.objectId,
+                                                     self.robot_link_to_index['gripper_right_finger_link'],
+                                                     self.object_link_to_index['object_link'])
+            self.force_buffer_r.append(f_r)
+
+            f_l, contact_l = self._get_contact_force(self.robotId, self.objectId,
+                                                     self.robot_link_to_index['gripper_left_finger_link'],
+                                                     self.object_link_to_index['object_link'])
+            self.force_buffer_l.append(f_l)
+
+            self.in_contact = np.array([contact_r, contact_l])
 
             # although forces are called "raw", the are averaged to be as close as possible to the real data.
             self.current_forces_raw = np.array([
@@ -144,7 +151,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
             self.force_rew = - map_in_range(delta_f_sum, self.fmax, 1.0)
 
             if self.velocity_rew_coef is not None:
-                total_vel = np.sum(np.abs(self.current_vel))
+                total_vel = np.sum(np.abs(self.in_contact*self.current_vel))
                 self.vel_rew = -map_in_range(total_vel, self.total_max_vel, self.velocity_rew_coef)
             else:
                 self.vel_rew = 0.0

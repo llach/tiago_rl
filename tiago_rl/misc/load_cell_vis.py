@@ -29,13 +29,15 @@ class LoadCellVisualiser:
         self.t = 0
 
         # create plots and curves
-        self.pl_raw = self.win.addPlot(title="Raw Contact Forces")
-        self.pl_curr = self.win.addPlot(title="Processed Contact Forces")
+        self.pl_force = self.win.addPlot(title="Contact Forces")
+        self.pl_cntct = self.win.addPlot(title="In Contact?")
+
+        self.pl_cntct.setYRange(-0.05, 1.05)
 
         self._add_target_force_lines()
 
         # draw lines at threshold force
-        for pl in [self.pl_curr, self.pl_raw]:
+        for pl in [self.pl_force]:
             threshold_line = pg.InfiniteLine(
                 pos=env.force_threshold,
                 angle=0
@@ -94,13 +96,13 @@ class LoadCellVisualiser:
 
         self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
                           self.pl_joint_acc, self.pl_q, self.pl_vel,
-                          self.pl_raw, self.pl_curr]
+                          self.pl_force, self.pl_cntct]
 
-        self.curve_raw_r = self.pl_raw.plot(pen='r')
-        self.curve_raw_l = self.pl_raw.plot(pen='y')
+        self.curve_raw_r = self.pl_force.plot(pen='r')
+        self.curve_raw_l = self.pl_force.plot(pen='y')
 
-        self.curve_curr_r = self.pl_curr.plot(pen='r')
-        self.curve_curr_l = self.pl_curr.plot(pen='y')
+        self.curve_curr_r = self.pl_cntct.plot(pen='r')
+        self.curve_curr_l = self.pl_cntct.plot(pen='y')
 
         self.curve_succ = self.pl_succ.plot(pen='g')
         self.curve_rewa = self.pl_rewa.plot(pen='b')
@@ -158,13 +160,8 @@ class LoadCellVisualiser:
             pos=tf,
             angle=0
         )
-        self.curr_target_line = pg.InfiniteLine(
-            pos=tf,
-            angle=0
-        )
 
-        for pl, ln in zip([self.pl_raw, self.pl_curr],
-                          [self.raw_target_line, self.curr_target_line]):
+        for pl, ln in zip([self.pl_force], [self.raw_target_line]):
             pl.addItem(ln)
 
             # always show target force in ticks
@@ -173,8 +170,7 @@ class LoadCellVisualiser:
             ay.setTicks([[(v, str(v)) for v in ticks]])
 
     def reset(self):
-        self.pl_raw.removeItem(self.raw_target_line)
-        self.pl_curr.removeItem(self.curr_target_line)
+        self.pl_force.removeItem(self.raw_target_line)
 
         self._add_target_force_lines()
 
@@ -197,8 +193,8 @@ class LoadCellVisualiser:
         self.raw_r.append(self.env.current_forces_raw[0])
         self.raw_l.append(self.env.current_forces_raw[1])
 
-        self.curr_r.append(self.env.current_forces[0])
-        self.curr_l.append(self.env.current_forces[1])
+        self.curr_r.append(self.env.in_contact[0])
+        self.curr_l.append(self.env.in_contact[1])
 
         self.succ.append(is_success)
         self.rs.append(reward)
