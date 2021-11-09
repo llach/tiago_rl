@@ -151,10 +151,16 @@ class LoadCellTactileEnv(BulletRobotEnv):
             self.force_rew = - map_in_range(delta_f_sum, self.fmax, 1.0)
 
             if self.velocity_rew_coef is not None:
-                total_vel = np.sum(np.abs(self.in_contact*self.current_vel))
-                self.vel_rew = -map_in_range(total_vel, self.total_max_vel, self.velocity_rew_coef)
+
+                # self.vel_rew = -1+map_in_range(total_vel, self.total_max_vel, self.velocity_rew_coef)
+                if np.any(self.in_contact):
+                    total_vel = np.sum(np.abs(self.current_vel))
+                    self.vel_rew = -self.velocity_rew_coef*(map_in_range(total_vel, 0.16, 1.0)**2)
+                    # self.vel_rew = -1+(1-self.velocity_rew_coef*total_vel)
+                else:
+                    self.vel_rew = -1
             else:
-                self.vel_rew = 0.0
+                self.vel_rew = -1.0
 
             if self.accel_rew_coef is not None:
                 total_acc = np.sum(np.abs(self.current_acc))
@@ -163,7 +169,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
                 self.accel_rew = 0.0
 
             if self.object_velocity_rew_coef is not None:
-                obj_v = np.abs(np.linalg.norm(self.get_object_velocity()[0]))
+                obj_v = np.abs(np.linalg.norm(np.sum(self.in_contact)*self.get_object_velocity()[0]))
                 self.obj_vel_rew = -map_in_range(obj_v, 0.18, self.object_velocity_rew_coef)
             else:
                 self.obj_vel_rew = 0.0
