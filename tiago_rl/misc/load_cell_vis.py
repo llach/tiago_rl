@@ -94,6 +94,16 @@ class LoadCellVisualiser:
 
         self.pl_succ.setYRange(-0.2, 1.2)
 
+        self.win.nextRow()
+
+        self.pl_force_rew = self.win.addPlot(title="Force Reward")
+        self.pl_vel_rew = self.win.addPlot(title="Velocity Reward")
+
+        self.win.nextRow()
+
+        self.pl_acc_rew = self.win.addPlot(title="Acceleration Reward")
+        self.pl_ovel_rew = self.win.addPlot(title="Obj.Vel. Reward")
+
         self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
                           self.pl_joint_acc, self.pl_q, self.pl_vel,
                           self.pl_force, self.pl_cntct]
@@ -125,6 +135,12 @@ class LoadCellVisualiser:
         self.curve_acc_r = self.pl_joint_acc.plot(pen='r')
         self.curve_acc_l = self.pl_joint_acc.plot(pen='y')
 
+        self.curve_force_rew = self.pl_force_rew.plot()
+        self.curve_vel_rew = self.pl_vel_rew.plot()
+
+        self.curve_acc_rew = self.pl_acc_rew.plot()
+        self.curve_ovel_rew = self.pl_ovel_rew.plot()
+
         # buffers for plotted data
         self.raw_r = []
         self.raw_l = []
@@ -153,6 +169,12 @@ class LoadCellVisualiser:
 
         self.accel_r = []
         self.accel_l = []
+
+        self.force_rew = []
+        self.vel_rew = []
+
+        self.acc_rew = []
+        self.ovel_rew = []
 
     def _add_target_force_lines(self):
         tf = self.env.target_forces[0]
@@ -229,6 +251,11 @@ class LoadCellVisualiser:
         self.accel_r.append(self.env.current_acc[0])
         self.accel_l.append(self.env.current_acc[1])
 
+        self.force_rew.append(self.env.force_rew)
+        self.vel_rew.append(self.env.vel_rew)
+        self.acc_rew.append(self.env.accel_rew)
+        self.ovel_rew.append(self.env.obj_vel_rew)
+
         # plot new data
         self.curve_raw_r.setData(self.raw_r)
         self.curve_raw_l.setData(self.raw_l)
@@ -252,6 +279,12 @@ class LoadCellVisualiser:
 
         self.curve_acc_r.setData(self.accel_r)
         self.curve_acc_l.setData(self.accel_l)
+
+        self.curve_force_rew.setData(self.force_rew)
+        self.curve_vel_rew.setData(self.vel_rew)
+
+        self.curve_acc_rew.setData(self.acc_rew)
+        self.curve_ovel_rew.setData(self.ovel_rew)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux
