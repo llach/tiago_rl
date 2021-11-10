@@ -1,5 +1,4 @@
 import numpy as np
-from collections import deque
 
 from tiago_rl.envs import BulletRobotEnv
 
