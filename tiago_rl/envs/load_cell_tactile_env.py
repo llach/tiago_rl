@@ -30,32 +30,20 @@ CONT_REWARDS = 'continuous'
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, force_smoothing=None,
-                 target_forces=None, force_threshold=None, force_type=None, reward_type=None,
-                 force_sampling_range=None, velocity_rew_coef=None, object_velocity_rew_coef=None,
-                 accel_rew_coef=None, *args, **kwargs):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, *args, **kwargs):
 
-        self.force_smoothing = force_smoothing if force_smoothing is not None else 4
         self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
         self.force_noise_sigma = force_noise_sigma if force_noise_sigma is not None else 0.0077
-        self.force_threshold = force_threshold if force_threshold is not None else 3 * self.force_noise_sigma
-        self.force_sampling_range = force_sampling_range
-
-        self.force_buffer_r = deque(maxlen=self.force_smoothing)
-        self.force_buffer_l = deque(maxlen=self.force_smoothing)
-
+        
+        self.force_threshold =  3 * self.force_noise_sigma
         self.success_threshold = 5 * self.force_noise_sigma
 
-        self.accel_rew_coef = accel_rew_coef
-        self.velocity_rew_coef = velocity_rew_coef
         self.object_velocity_rew_coef = object_velocity_rew_coef
 
-        if target_forces is not None:
-            self.target_forces = np.array(target_forces)
-        else:
-            self.target_forces = np.array([10.0, 10.0])
+        self.target_force = target_force
+        self.target_forces = np.array([0.0, 0.0])
 
-        self.fmax = np.sum(np.abs(target_forces))
+        self.fmax = np.sum(np.abs(self.target_forces))
 
         self.force_type = force_type or RAW_FORCES
         self.reward_type = reward_type or CONT_REWARDS
@@ -70,8 +58,6 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.in_contact = np.array([False, False])
 
         self.force_rew = -100
-        self.vel_rew = -100
-        self.accel_rew = -100
         self.obj_vel_rew = -100
 
         self.rew = -100
@@ -107,20 +93,15 @@ class LoadCellTactileEnv(BulletRobotEnv):
             f_r, contact_r = self._get_contact_force(self.robotId, self.objectId,
                                                      self.robot_link_to_index['gripper_right_finger_link'],
                                                      self.object_link_to_index['object_link'])
-            self.force_buffer_r.append(f_r)
 
             f_l, contact_l = self._get_contact_force(self.robotId, self.objectId,
                                                      self.robot_link_to_index['gripper_left_finger_link'],
                                                      self.object_link_to_index['object_link'])
-            self.force_buffer_l.append(f_l)
 
             self.in_contact = np.array([contact_r, contact_l])
 
             # although forces are called "raw", the are averaged to be as close as possible to the real data.
-            self.current_forces_raw = np.array([
-                np.mean(self.force_buffer_r),
-                np.mean(self.force_buffer_l)
-            ])
+            self.current_forces_raw = np.array([f_r, f_l])
 
             # calculate current forces based on force type
             if self.force_type == BINARY_FORCES:
@@ -150,52 +131,25 @@ class LoadCellTactileEnv(BulletRobotEnv):
             delta_f_sum = np.sum(np.abs(delta_f))
             self.force_rew = - map_in_range(delta_f_sum, self.fmax, 1.0)
 
-            if self.velocity_rew_coef is not None:
-
-                # self.vel_rew = -1+map_in_range(total_vel, self.total_max_vel, self.velocity_rew_coef)
-                if np.any(self.in_contact):
-                    total_vel = np.sum(np.abs(self.current_vel))
-                    self.vel_rew = -self.velocity_rew_coef*(map_in_range(total_vel, 0.16, 1.0)**2)
-                    # self.vel_rew = -1+(1-self.velocity_rew_coef*total_vel)
-                else:
-                    self.vel_rew = 0.0
-            else:
-                self.vel_rew = 0.0
-
-            if self.accel_rew_coef is not None:
-                total_acc = np.sum(np.abs(self.current_acc))
-                self.accel_rew = -map_in_range(total_acc, 2*self.vmax, self.accel_rew_coef)
-            else:
-                self.accel_rew = 0.0
-
             if self.object_velocity_rew_coef is not None:
                 obj_v = np.abs(np.linalg.norm(np.sum(self.in_contact)*self.get_object_velocity()[0]))
                 self.obj_vel_rew = -map_in_range(obj_v, 0.18, self.object_velocity_rew_coef)
             else:
                 self.obj_vel_rew = 0.0
 
-            self.rew = self.force_rew + self.vel_rew + self.obj_vel_rew + self.accel_rew
+            self.rew = self.force_rew + self.obj_vel_rew
             return self.rew
         elif self.reward_type == SPARSE_REWARDS:
             is_goal = (np.abs(force_delta(self.current_forces_raw, self.target_forces)) < self.force_threshold).astype(np.int8)
-
-            if self.acceleration_penalty:
-                acc_penalty = np.array(np.abs(self.current_acc) > self.acceleration_penalty).astype(np.int8)
-            else:
-                acc_penalty = np.array([0.0, 0.0])
-
-            if self.force_delta_penalty:
-                fd_penalty = np.array(np.abs((self.current_forces_raw - self.last_forces_raw) / self.dt) > self.force_delta_penalty).astype(np.int8)
-            else:
-                fd_penalty = np.array([0.0, 0.0])
-
-            return np.sum(is_goal)-np.sum(acc_penalty)-np.sum(fd_penalty)
+            return np.sum(is_goal)
 
     def _reset_callback(self):
-        if self.force_sampling_range:
-            assert len(self.force_sampling_range) == 2
-            self.target_forces = np.around(np.full((2,), np.random.uniform(*self.force_sampling_range)), 3)
-            self.fmax = np.sum(np.abs(self.target_forces))
+        if type(self.target_force) == list:
+            assert len(self.target_force) == 2
+            self.target_forces = np.around(np.full((2,), np.random.uniform(*self.target_force)), 3)
+        else:
+            self.target_forces = np.array(2*[self.target_force])
+        self.fmax = np.sum(np.abs(self.target_forces))
 
 
 class GripperTactileEnv(LoadCellTactileEnv):
@@ -219,7 +173,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
 
         if 'object_pos' not in kwargs:
             kwargs.update({
-                'object_pos': [0.04, 0.02, 0.6]
+                'object_pos': [0.04, 0.0, 0.6]
             })
         if 'object_model' not in kwargs:
             kwargs.update({
@@ -285,7 +239,7 @@ class TIAGoTactileEnv(LoadCellTactileEnv):
                                     cam_distance=1.6000027656555176,
                                     robot_model="tiago_tactile.urdf",
                                     object_model="objects/object.urdf",
-                                    object_pos=[0.73, 0.07, 0.6],
+                                    object_pos=[0.73, 0.0, 0.6],
                                     table_model="objects/table.urdf",
                                     table_pos=[0.7, 0, 0.27],
                                     *args, **kwargs)

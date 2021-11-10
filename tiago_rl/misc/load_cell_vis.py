@@ -252,8 +252,6 @@ class LoadCellVisualiser:
         self.accel_l.append(self.env.current_acc[1])
 
         self.force_rew.append(self.env.force_rew)
-        self.vel_rew.append(self.env.vel_rew)
-        self.acc_rew.append(self.env.accel_rew)
         self.ovel_rew.append(self.env.obj_vel_rew)
 
         # plot new data
