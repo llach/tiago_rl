@@ -41,7 +41,10 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.object_velocity_rew_coef = object_velocity_rew_coef
 
         self.target_force = target_force
-        self.target_forces = np.array([0.0, 0.0])
+        if type(self.target_force) == float:
+            self.target_forces = np.array(2*[self.target_force])
+        else:
+            self.target_forces = np.array([0.0, 0.0])
 
         self.fmax = np.sum(np.abs(self.target_forces))
 
