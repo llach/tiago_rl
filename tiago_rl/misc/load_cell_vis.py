@@ -97,11 +97,6 @@ class LoadCellVisualiser:
         self.win.nextRow()
 
         self.pl_force_rew = self.win.addPlot(title="Force Reward")
-        self.pl_vel_rew = self.win.addPlot(title="Velocity Reward")
-
-        self.win.nextRow()
-
-        self.pl_acc_rew = self.win.addPlot(title="Acceleration Reward")
         self.pl_ovel_rew = self.win.addPlot(title="Obj.Vel. Reward")
 
         self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
@@ -136,9 +131,6 @@ class LoadCellVisualiser:
         self.curve_acc_l = self.pl_joint_acc.plot(pen='y')
 
         self.curve_force_rew = self.pl_force_rew.plot()
-        self.curve_vel_rew = self.pl_vel_rew.plot()
-
-        self.curve_acc_rew = self.pl_acc_rew.plot()
         self.curve_ovel_rew = self.pl_ovel_rew.plot()
 
         # buffers for plotted data
@@ -171,9 +163,6 @@ class LoadCellVisualiser:
         self.accel_l = []
 
         self.force_rew = []
-        self.vel_rew = []
-
-        self.acc_rew = []
         self.ovel_rew = []
 
     def _add_target_force_lines(self):
@@ -279,9 +268,6 @@ class LoadCellVisualiser:
         self.curve_acc_l.setData(self.accel_l)
 
         self.curve_force_rew.setData(self.force_rew)
-        self.curve_vel_rew.setData(self.vel_rew)
-
-        self.curve_acc_rew.setData(self.acc_rew)
         self.curve_ovel_rew.setData(self.ovel_rew)
 
         # on macOS, calling processEvents() is unnecessary
