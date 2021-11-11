@@ -30,7 +30,7 @@ CONT_REWARDS = 'continuous'
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, *args, **kwargs):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, *args, **kwargs):
 
         self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
         self.force_noise_sigma = force_noise_sigma if force_noise_sigma is not None else 0.0077
@@ -74,6 +74,8 @@ class LoadCellTactileEnv(BulletRobotEnv):
             exit(-1)
 
         # Environment Variation Variables
+        self.width_range = width_range
+
         self.obj_col_id = None
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
@@ -166,8 +168,13 @@ class LoadCellTactileEnv(BulletRobotEnv):
             p.removeCollisionShape(self.obj_col_id)
             self.obj_col_id = None
 
-        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=0.02)
-        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=0.02, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
+        if self.width_range is None:
+            width = 0.02
+        else:
+            width=np.random.uniform(self.width_range[0], self.width_range[1])
+
+        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=width)
+        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=width, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
 
         self.objectId = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, self.object_pos, [0, 0, 0, 1])
         p.changeDynamics(self.objectId, -1, lateralFriction=1.0, rollingFriction=1.0, contactStiffness=10000, contactDamping=100)
