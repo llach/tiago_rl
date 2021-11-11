@@ -2,6 +2,7 @@ import numpy as np
 import pybullet as p
 
 from tiago_rl.envs import BulletRobotEnv
+from tiago_rl.envs.utils import link_to_idx
 
 
 def force_delta(force_a, force_b):
@@ -30,7 +31,7 @@ CONT_REWARDS = 'continuous'
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, *args, **kwargs):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, location_sampling=False, *args, **kwargs):
 
         self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
         self.force_noise_sigma = force_noise_sigma if force_noise_sigma is not None else 0.0077
@@ -75,8 +76,16 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         # Environment Variation Variables
         self.width_range = width_range
+        self.location_sampling = location_sampling
+
+        self.olx = 0.04
+        self.oly = 0.0
+        self.olz = 0.6
+
+        self.r = 0.02
 
         self.obj_col_id = None
+        self.object_id = None # sim ID of grasp object
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
 
@@ -92,19 +101,19 @@ class LoadCellTactileEnv(BulletRobotEnv):
         # get joint positions and velocities from superclass
         joint_states = super(LoadCellTactileEnv, self)._get_obs()
 
-        if self.objectId:
+        if self.object_id:
             # store last forces
             self.last_forces = self.current_forces.copy()
             self.last_forces_raw = self.current_forces_raw.copy()
 
             # get current contact forces
-            f_r, contact_r = self._get_contact_force(self.robotId, self.objectId,
+            f_r, contact_r = self._get_contact_force(self.robotId, self.object_id,
                                                      self.robot_link_to_index['gripper_right_finger_link'],
-                                                     self.object_link_to_index['object_link'])
+                                                     self.object_link_to_index['link0'])
 
-            f_l, contact_l = self._get_contact_force(self.robotId, self.objectId,
+            f_l, contact_l = self._get_contact_force(self.robotId, self.object_id,
                                                      self.robot_link_to_index['gripper_left_finger_link'],
-                                                     self.object_link_to_index['object_link'])
+                                                     self.object_link_to_index['link0'])
 
             self.in_contact = np.array([contact_r, contact_l])
 
@@ -161,23 +170,39 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.fmax = np.sum(np.abs(self.target_forces))
 
         # object variation
-        if self.objectId is not None:
-            p.removeBody(self.objectId)
-            self.objectId = None
+        if self.object_id is not None:
+            p.removeBody(self.object_id)
+            self.object_id = None
         if self.obj_col_id is not None:
             p.removeCollisionShape(self.obj_col_id)
             self.obj_col_id = None
 
         if self.width_range is None:
-            width = 0.02
+            self.r = 0.02
         else:
-            width=np.random.uniform(self.width_range[0], self.width_range[1])
+            self.r = np.round(np.random.uniform(self.width_range[0], self.width_range[1]), 4)
 
-        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=width)
-        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=width, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
+        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=self.r)
+        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=self.r, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
 
-        self.objectId = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, self.object_pos, [0, 0, 0, 1])
-        p.changeDynamics(self.objectId, -1, lateralFriction=1.0, rollingFriction=1.0, contactStiffness=10000, contactDamping=100)
+        if self.location_sampling:
+            l = 2*0.045*0.95
+            f = l-2*self.r
+            self.oly = np.round(np.random.uniform(-f/2, f/2), 4)
+        else:
+            self.oly = 0.0
+
+        self.object_id = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, [self.olx, self.oly, self.olz], [0, 0, 0, 1])
+        p.changeDynamics(self.object_id, -1, lateralFriction=1.0, rollingFriction=1.0, contactStiffness=10000, contactDamping=100)
+
+        self.object_link_to_index = link_to_idx(self.object_id)
+    
+    def get_object_velocity(self):
+        if self.object_id is not None:
+            return p.getBaseVelocity(self.object_id)
+        else:
+            return [0.0, 0.0]
+
 
 class GripperTactileEnv(LoadCellTactileEnv):
 
@@ -197,15 +222,6 @@ class GripperTactileEnv(LoadCellTactileEnv):
             'gripper_right_finger_joint': 0.08,
             'gripper_left_finger_joint': 0.08,
         }
-
-        if 'object_pos' not in kwargs:
-            kwargs.update({
-                'object_pos': [0.04, 0.0, 0.6]
-            })
-        if 'object_model' not in kwargs:
-            kwargs.update({
-                'object_model': "objects/object.urdf"
-            })
 
         LoadCellTactileEnv.__init__(self,
                                     joints=joints,
@@ -265,8 +281,6 @@ class TIAGoTactileEnv(LoadCellTactileEnv):
                                     cam_pitch=-35.40000915527344,
                                     cam_distance=1.6000027656555176,
                                     robot_model="tiago_tactile.urdf",
-                                    object_model="objects/object.urdf",
-                                    object_pos=[0.73, 0.0, 0.6],
                                     table_model="objects/table.urdf",
                                     table_pos=[0.7, 0, 0.27],
                                     *args, **kwargs)

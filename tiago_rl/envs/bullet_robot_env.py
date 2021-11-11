@@ -25,7 +25,7 @@ class BulletRobotEnv(gym.Env):
     """
     def __init__(self, initial_state, joints, n_actions=None, show_gui=False, control_mode='vel',
                  cam_distance=None, cam_yaw=None, cam_pitch=None, cam_target_position=None, max_joint_velocities=None,
-                 robot_model=None, robot_pos=None, object_model=None, object_pos=None, table_model=None, table_pos=None):
+                 robot_model=None, robot_pos=None, table_model=None, table_pos=None):
 
         # PyBullet camera settings for visualisation and RGB array rendering
         self.cam_distance = cam_distance or 1.5
@@ -81,12 +81,9 @@ class BulletRobotEnv(gym.Env):
         # needs to be set by child environment
         self.robotId = None  # sim ID of robot model
         self.jn2Idx = None  # dict of joint names to model indices
-        self.objectId = None # sim ID of grasp object
 
         self.robot_model = robot_model
         self.robot_pos = robot_pos or [0, 0, 0]
-        self.object_model = object_model
-        self.object_pos = object_pos or [0, 0, 0]
         self.table_model = table_model
         self.table_pos = table_pos or [0, 0, 0]
 
@@ -94,7 +91,7 @@ class BulletRobotEnv(gym.Env):
         obs = self.reset()
 
         if self.control_mode == POS_CTRL:
-            action_high = 10
+            action_high = 0.045
         elif self.control_mode == VEL_CTRL:
             action_high = 0.08
         self.action_space = spaces.Box(-0.08, 0.08, shape=(self.n_actions,), dtype='float32')
@@ -201,11 +198,6 @@ class BulletRobotEnv(gym.Env):
 
         # joint name to joint index mapping
         self.jn2Idx = joint_to_idx(self.robotId)
-
-        if self.object_model:
-            # load grasping object
-            self.objectId = p.loadURDF(self.object_model, basePosition=self.object_pos)
-            self.object_link_to_index = link_to_idx(self.objectId)
 
         if self.table_model:
             # load table
@@ -381,9 +373,3 @@ class BulletRobotEnv(gym.Env):
 
     def get_desired_q_dict(self):
         return dict(zip(self.joints, self.desired_action))
-
-    def get_object_velocity(self):
-        if self.objectId is not None:
-            return p.getBaseVelocity(self.objectId)
-        else:
-            return [0.0, 0.0]
