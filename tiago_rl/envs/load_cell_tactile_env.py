@@ -31,7 +31,7 @@ CONT_REWARDS = 'continuous'
 
 class LoadCellTactileEnv(BulletRobotEnv):
 
-    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, location_sampling=False, *args, **kwargs):
+    def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, location_sampling=False, shape_sampling=False, *args, **kwargs):
 
         self.force_noise_mu = force_noise_mu if force_noise_mu is not None else 0.0
         self.force_noise_sigma = force_noise_sigma if force_noise_sigma is not None else 0.0077
@@ -77,6 +77,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
         # Environment Variation Variables
         self.width_range = width_range
         self.location_sampling = location_sampling
+        self.shape_sampling = shape_sampling
 
         self.olx = 0.04
         self.oly = 0.0
@@ -85,6 +86,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.r = 0.02
 
         self.obj_col_id = None
+        self.object_type = None
         self.object_id = None
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
@@ -175,9 +177,16 @@ class LoadCellTactileEnv(BulletRobotEnv):
         else:
             self.r = np.round(np.random.uniform(self.width_range[0], self.width_range[1]), 4)
 
+        if self.shape_sampling:
+            self.object_type = np.random.choice([p.GEOM_CYLINDER, p.GEOM_BOX])
+        else:
+            self.object_type = p.GEOM_CYLINDER
+
         # create collision and visual objects
-        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=self.r)
-        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=self.r, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
+        height = 0.1
+        he = [0.02, self.r, height/2]
+        self.obj_col_id = p.createCollisionShape(self.object_type, halfExtents=he, height=height, radius=self.r)
+        self.obj_vis_id = p.createVisualShape(self.object_type, halfExtents=he, length=height, radius=self.r, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
 
         # sample object location
         if self.location_sampling:
