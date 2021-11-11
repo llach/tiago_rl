@@ -383,5 +383,7 @@ class BulletRobotEnv(gym.Env):
         return dict(zip(self.joints, self.desired_action))
 
     def get_object_velocity(self):
-        if self.objectId:
+        if self.objectId is not None:
             return p.getBaseVelocity(self.objectId)
+        else:
+            return [0.0, 0.0]

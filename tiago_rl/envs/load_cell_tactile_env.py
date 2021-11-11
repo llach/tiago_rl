@@ -1,4 +1,5 @@
 import numpy as np
+import pybullet as p
 
 from tiago_rl.envs import BulletRobotEnv
 
@@ -72,10 +73,13 @@ class LoadCellTactileEnv(BulletRobotEnv):
             print(f"unknown reward type: {self.reward_type}")
             exit(-1)
 
+        # Environment Variation Variables
+        self.obj_col_id = None
+
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
 
         self.vmax = np.abs(list(self.max_joint_velocities.values())[0])
-
+        
     # BulletRobotEnv methods
     # ----------------------------
 
@@ -146,6 +150,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
             return np.sum(is_goal)
 
     def _reset_callback(self):
+        # target force sampling
         if type(self.target_force) == list:
             assert len(self.target_force) == 2
             self.target_forces = np.around(np.full((2,), np.random.uniform(*self.target_force)), 3)
@@ -153,6 +158,19 @@ class LoadCellTactileEnv(BulletRobotEnv):
             self.target_forces = np.array(2*[self.target_force])
         self.fmax = np.sum(np.abs(self.target_forces))
 
+        # object variation
+        if self.objectId is not None:
+            p.removeBody(self.objectId)
+            self.objectId = None
+        if self.obj_col_id is not None:
+            p.removeCollisionShape(self.obj_col_id)
+            self.obj_col_id = None
+
+        self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=0.02)
+        self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=0.02, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
+
+        self.objectId = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, self.object_pos, [0, 0, 0, 1])
+        p.changeDynamics(self.objectId, -1, lateralFriction=1.0, rollingFriction=1.0, contactStiffness=10000, contactDamping=100)
 
 class GripperTactileEnv(LoadCellTactileEnv):
 
