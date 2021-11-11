@@ -80,12 +80,12 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.olx = 0.04
         self.oly = 0.0
-        self.olz = 0.6
+        self.olz = 0.59
 
         self.r = 0.02
 
         self.obj_col_id = None
-        self.object_id = None # sim ID of grasp object
+        self.object_id = None
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
 
@@ -169,32 +169,29 @@ class LoadCellTactileEnv(BulletRobotEnv):
             self.target_forces = np.array(2*[self.target_force])
         self.fmax = np.sum(np.abs(self.target_forces))
 
-        # object variation
-        if self.object_id is not None:
-            p.removeBody(self.object_id)
-            self.object_id = None
-        if self.obj_col_id is not None:
-            p.removeCollisionShape(self.obj_col_id)
-            self.obj_col_id = None
-
+        # object width variation
         if self.width_range is None:
             self.r = 0.02
         else:
             self.r = np.round(np.random.uniform(self.width_range[0], self.width_range[1]), 4)
 
+        # create collision and visual objects
         self.obj_col_id = p.createCollisionShape(p.GEOM_CYLINDER, height=0.1, radius=self.r)
         self.obj_vis_id = p.createVisualShape(p.GEOM_CYLINDER, length=0.1, radius=self.r, rgbaColor=list(np.random.uniform(0,1,[3])) + [1])
 
+        # sample object location
         if self.location_sampling:
-            l = 2*0.045*0.95
+            l = 2*0.045*0.95 # we only use 95% of the opening's width
             f = l-2*self.r
             self.oly = np.round(np.random.uniform(-f/2, f/2), 4)
         else:
             self.oly = 0.0
 
+        # create body and apply stiffness parameters
         self.object_id = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, [self.olx, self.oly, self.olz], [0, 0, 0, 1])
         p.changeDynamics(self.object_id, -1, lateralFriction=1.0, rollingFriction=1.0, contactStiffness=10000, contactDamping=100)
 
+        # finally, create link mapping
         self.object_link_to_index = link_to_idx(self.object_id)
     
     def get_object_velocity(self):
