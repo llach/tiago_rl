@@ -81,7 +81,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
         self.olx = 0.04
         self.oly = 0.0
-        self.olz = 0.59
+        self.olz = 0.588
 
         self.r = 0.02
 
@@ -238,7 +238,7 @@ class GripperTactileEnv(LoadCellTactileEnv):
                                     cam_distance=1.1823151111602783,
                                     cam_target_position=(-0.2751278877258301, -0.15310688316822052, -0.27969369292259216),
                                     robot_model="gripper_tactile.urdf",
-                                    robot_pos=[0.0, 0.0, 0.27],
+                                    robot_pos=[0.0, 0.0, 0.265],
                                     *args,
                                     **kwargs)
 
