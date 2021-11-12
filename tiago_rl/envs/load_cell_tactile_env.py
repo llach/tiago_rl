@@ -194,7 +194,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
             f = l-2*self.r
             self.oly = np.round(np.random.uniform(-f/2, f/2), 4)
         else:
-            self.oly = 0.0
+            self.oly = self.oly
 
         # create body and apply stiffness parameters
         self.object_id = p.createMultiBody(2.0, self.obj_col_id, self.obj_vis_id, [self.olx, self.oly, self.olz], [0, 0, 0, 1])

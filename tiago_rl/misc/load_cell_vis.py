@@ -99,6 +99,8 @@ class LoadCellVisualiser:
         self.pl_force_rew = self.win.addPlot(title="Force Reward")
         self.pl_ovel_rew = self.win.addPlot(title="Obj.Vel. Reward")
 
+        self.pl_ovel_rew.setYRange(0.01, -1.0)
+
         self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
                           self.pl_joint_acc, self.pl_q, self.pl_vel,
                           self.pl_force, self.pl_cntct]
