@@ -218,7 +218,7 @@ class BulletRobotEnv(gym.Env):
         self._env_setup(self.initial_state)
 
         # step a few times for things to get settled
-        for _ in range(100):
+        for _ in range(1):
             self._step_sim()
 
         return True
