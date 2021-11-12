@@ -181,11 +181,14 @@ class LoadCellVisualiser:
             ay = pl.getAxis('left')
             ticks = [0, tf]
             ay.setTicks([[(v, str(v)) for v in ticks]])
-
-    def reset(self):
+    
+    def reset_target_force_lines(self):
         self.pl_force.removeItem(self.raw_target_line)
 
         self._add_target_force_lines()
+
+    def reset(self):
+        self.reset_target_force_lines()
 
         for pl in self.all_plots:
             if self.t == 0:
