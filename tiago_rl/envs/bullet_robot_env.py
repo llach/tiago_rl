@@ -334,10 +334,7 @@ class BulletRobotEnv(gym.Env):
 
         # we might want to do impose additional checks upon contacts
         f = [c[9] for c in contacts]
-        if len(f)>1:
-            return np.mean(f)
-        else:
-            return f
+        return np.mean(f)
 
     def _get_contact_force(self, bodyA, bodyB, linkA, linkB):
         if self.robotId:
