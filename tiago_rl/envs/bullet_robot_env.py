@@ -94,7 +94,7 @@ class BulletRobotEnv(gym.Env):
             action_high = 0.045
         elif self.control_mode == VEL_CTRL:
             action_high = 0.08
-        self.action_space = spaces.Box(-0.08, 0.08, shape=(self.n_actions,), dtype='float32')
+        self.action_space = spaces.Box(-action_high, action_high, shape=(self.n_actions,), dtype='float32')
 
         high = 5
         self.observation_space = spaces.Box(-high, high, shape=obs.shape, dtype='float32')
@@ -235,15 +235,12 @@ class BulletRobotEnv(gym.Env):
         p.stepSimulation()
 
     def _set_action(self, action):
-        """Applies the given action to the simulation.
+        """Applies the given action to the simulation. Assumes clipped actions.
         """
-        self.desired_action = action.copy()
-
-        # clipping actions is encouraged in the pybullet docs even though we have limits set in the simulation
-        self._clip_actions()
 
         if self.joints:
-            for i, [jn, act] in enumerate(zip(self.joints, self.desired_action_clip)):
+            for i, [jn, act] in enumerate(zip(self.joints, action)):
+                print(action)
                 ji = self.jn2Idx[jn]
                 if self.control_mode == POS_CTRL:
                     p.setJointMotorControl2(bodyUniqueId=self.robotId,
@@ -257,23 +254,6 @@ class BulletRobotEnv(gym.Env):
                                             targetVelocity=act)
         else:
             print("Environment has no joints specified!")
-
-    def _clip_actions(self):
-        if self.control_mode == POS_CTRL:
-            # this clipping is not velocity-sensitive as we don't want to mess with the internal PI controller of bullet
-            # previous experiments have proven for it to not reach the target if too small position deltas are set
-            self.desired_action_clip = np.clip(self.desired_action, self.lli, self.uli)
-
-        elif self.control_mode == VEL_CTRL:
-
-            # this clips velocities only and ignores current position
-            for i, [jn, act] in enumerate(zip(self.joints, self.desired_action)):
-                if jn in self.max_joint_velocities:
-                    mv = self.max_joint_velocities[jn]
-                    self.desired_action_clip[i] = np.clip(act, -mv, mv)
-
-                else:
-                    print(f"no velocity limit given for joint {jn}. won't clip.")
 
     def _get_obs(self):
         """Returns the observation.
