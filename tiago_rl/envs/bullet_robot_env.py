@@ -237,10 +237,11 @@ class BulletRobotEnv(gym.Env):
     def _set_action(self, action):
         """Applies the given action to the simulation. Assumes clipped actions.
         """
+        # copy for plotting
+        self.desired_action = action.copy()
 
         if self.joints:
             for i, [jn, act] in enumerate(zip(self.joints, action)):
-                print(action)
                 ji = self.jn2Idx[jn]
                 if self.control_mode == POS_CTRL:
                     p.setJointMotorControl2(bodyUniqueId=self.robotId,

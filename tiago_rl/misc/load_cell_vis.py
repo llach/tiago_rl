@@ -124,8 +124,8 @@ class LoadCellVisualiser:
             self.curve_des_r = self.pl_vel.plot(pen='c')
             self.curve_des_l = self.pl_vel.plot(pen='b')
 
-        self.curve_currq_r = self.pl_q.plot(pen='g')
-        self.curve_currq_l = self.pl_q.plot(pen='b')
+        self.curve_currq_r = self.pl_q.plot(pen='r')
+        self.curve_currq_l = self.pl_q.plot(pen='y')
 
         self.curve_obj_lin_vel = self.pl_obj_lin_vel.plot(pen='m')
 
@@ -261,8 +261,8 @@ class LoadCellVisualiser:
         self.curve_currq_r.setData(self.currq_r)
         self.curve_currq_l.setData(self.currq_l)
 
-        # self.curve_des_r.setData(self.des_r)
-        # self.curve_des_l.setData(self.des_l)
+        self.curve_des_r.setData(self.des_r)
+        self.curve_des_l.setData(self.des_l)
 
         self.curve_currv_r.setData(self.vel_r)
         self.curve_currv_l.setData(self.vel_l)
