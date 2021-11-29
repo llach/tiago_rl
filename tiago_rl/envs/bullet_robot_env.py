@@ -92,10 +92,10 @@ class BulletRobotEnv(gym.Env):
         obs = self.reset()
 
         if self.control_mode == POS_CTRL:
-            action_high = 0.045
+            action_bounds = [0.0, 0.045]
         elif self.control_mode == VEL_CTRL:
-            action_high = 0.08
-        self.action_space = spaces.Box(-action_high, action_high, shape=(self.n_actions,), dtype='float32')
+            action_bounds = [-0.08, 0.08]
+        self.action_space = spaces.Box(*action_bounds, shape=(self.n_actions,), dtype='float32')
 
         high = 5
         self.observation_space = spaces.Box(-high, high, shape=obs.shape, dtype='float32')

@@ -26,7 +26,7 @@ class GripperCloseEnv(BulletRobotEnv):
             0.043,
         ]
 
-        max_vel = 0.02
+        max_vel = 0.08
         max_joint_velocities = {
             'gripper_right_finger_joint': max_vel,
             'gripper_left_finger_joint': max_vel,
@@ -75,10 +75,12 @@ class GripperCloseEnv(BulletRobotEnv):
         """
         sample new goal and new initial state
         """
-        initial_state = np.round(np.array(2*[np.random.uniform(*self.joint_range)]), 4)
+        # initial_state = np.round(np.array(2*[np.random.uniform(*self.joint_range)]), 4)
+        initial_state = 2*[0.043]
         self.initial_state = list(zip(self.joints, initial_state))
         
-        self.q_goal = np.round(np.random.uniform(*self.joint_range), 4)
+        # self.q_goal = np.round(np.random.uniform(*self.joint_range), 4)
+        self.q_goal = 0.0
 
     
     def _is_success(self):
