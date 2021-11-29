@@ -90,8 +90,6 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.object_id = None
 
         BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
-
-        self.vmax = np.abs(list(self.max_joint_velocities.values())[0])
         
     # BulletRobotEnv methods
     # ----------------------------
