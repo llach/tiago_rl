@@ -10,11 +10,13 @@ class ObsConfig(Enum):
 
 class GripperCloseEnv(BulletRobotEnv):
 
-    def __init__(self, obs_config: list[ObsConfig] = [ObsConfig.GOAL_DELTA], *args, **kwargs) -> None:
+    def __init__(self, obs_config: list[ObsConfig] = [ObsConfig.GOAL_DELTA], sample_initial: bool = False, sample_goal: bool = False, *args, **kwargs) -> None:
         self.q_goal = 0.0
         self.joint_range = [0.001, 0.043]
 
         self.obs_config = obs_config
+        self.sample_initial = sample_initial
+        self.sample_goal = sample_goal
 
         joints = [
             'gripper_right_finger_joint',
@@ -48,6 +50,17 @@ class GripperCloseEnv(BulletRobotEnv):
     def _goal_delta(self, q):
         return q - self.q_goal
 
+    def _match_obs(self, oc: ObsConfig):
+        if oc == ObsConfig.GOAL_DELTA:
+            return self._goal_delta(self.current_pos)
+        if oc == ObsConfig.POSITIONS:
+            return self.current_pos
+        if oc == ObsConfig.VELOCITIES:
+            return self.current_vel
+        else:
+            print("unknown obs type {oc}")
+            exit(-1)
+
     def _get_obs(self):
         """
         construct observation space:
@@ -57,13 +70,8 @@ class GripperCloseEnv(BulletRobotEnv):
         """
 
         _obs = []
-        if ObsConfig.GOAL_DELTA in self.obs_config:
-            _obs.append(self._goal_delta(self.current_pos))
-        if ObsConfig.POSITIONS in self.obs_config:
-            _obs.append(self.current_pos)
-        if ObsConfig.VELOCITIES in self.obs_config:
-            _obs.append(self.current_vel)
-
+        for oc in self.obs_config:
+            _obs.append(self._match_obs(oc))
         return np.concatenate(_obs)
 
     def _compute_reward(self):
@@ -75,10 +83,18 @@ class GripperCloseEnv(BulletRobotEnv):
         """
         sample new goal and new initial state
         """
-        initial_state = np.round(np.array(2*[np.random.uniform(*self.joint_range)]), 4)
+        if self.sample_goal:
+            self.q_goal = np.round(np.random.uniform(*self.joint_range), 4)
+        else:
+            self.q_goal = 0.0
+        
+        if self.sample_initial:
+            initial_state = np.round(np.array(2*[np.random.uniform(*self.joint_range)]), 4)
+        else:
+            initial_state = 0.043
         self.initial_state = list(zip(self.joints, initial_state))
         
-        self.q_goal = np.round(np.random.uniform(*self.joint_range), 4)
+        
 
     
     def _is_success(self):
