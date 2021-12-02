@@ -130,7 +130,7 @@ class BulletRobotEnv(gym.Env):
         info = {
             'is_success': self._is_success(), # used by the HER algorithm
         }
-        return obs, reward, done, info
+        return obs, reward, self._is_done(), info
 
     def reset(self):
         # For now, we leave the initial reset loop intact. Might come in handy
@@ -262,6 +262,9 @@ class BulletRobotEnv(gym.Env):
         """
         pos, vel = self._get_joint_states()
         return np.concatenate([pos, vel])
+
+    def _is_done(self):
+        return False
 
     def _compute_reward(self):
         """Returns the reward for this timestep.
