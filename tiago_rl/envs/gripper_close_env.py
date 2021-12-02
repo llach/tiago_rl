@@ -8,19 +8,27 @@ class ObsConfig(str, Enum):
     POSITIONS = "positions"
     VELOCITIES = "velocities"
 
+class RewardTypes(str, Enum):
+    CONTINUOUS = "continuous"
+    SPARSE = "sparse"    
+
 def map_in_range(v: float, vrange: list, trange: list):
     return (v-vrange[0])*((trange[1]-trange[0])/(vrange[1]-vrange[0]))+trange[0]
 
 class GripperCloseEnv(BulletRobotEnv):
 
-    def __init__(self, obs_config: list[ObsConfig] = [ObsConfig.GOAL_DELTA], sample_initial: bool = False, sample_goal: bool = False, *args, **kwargs) -> None:
+    def __init__(self, obs_config: list[ObsConfig] = [ObsConfig.GOAL_DELTA], sample_initial: bool = False, sample_goal: bool = False, reward_type: RewardTypes = RewardTypes.SPARSE, *args, **kwargs) -> None:
         self.q_goal = 0.0
         self.joint_range = [0.001, 0.043]
         self.pos_range = [0.0, 0.043]
+        self.goal_margin = 0.0004
 
         self.obs_config = obs_config
         self.sample_initial = sample_initial
         self.sample_goal = sample_goal
+        self.reward_type = reward_type
+
+        self.rate = 240 # pybullet constraint, we don't allow this to change
 
         joints = [
             'gripper_right_finger_joint',
@@ -32,10 +40,10 @@ class GripperCloseEnv(BulletRobotEnv):
             0.043,
         ]
 
-        max_vel = 0.08
+        self.max_vel = 0.08
         max_joint_velocities = {
-            'gripper_right_finger_joint': max_vel,
-            'gripper_left_finger_joint': max_vel,
+            'gripper_right_finger_joint': self.max_vel,
+            'gripper_left_finger_joint': self.max_vel,
         }
 
         BulletRobotEnv.__init__(self,
@@ -78,9 +86,20 @@ class GripperCloseEnv(BulletRobotEnv):
             _obs.append(self._match_obs(oc))
         return np.concatenate(_obs)
 
+    def _is_done(self):
+        self.t += 1
+        if self.t >= self.steps:
+            return True
+        return False
+
     def _compute_reward(self):
         gd = np.abs(self._goal_delta(self.current_pos))
-        return -np.sum(map_in_range(gd, self.pos_range, [0.0, 1.0]))
+
+        if self.reward_type == RewardTypes.SPARSE:
+            return int(np.sum(gd < self.goal_margin))
+        elif self.reward_type == RewardTypes.CONTINUOUS:
+            return -np.sum(map_in_range(gd, self.pos_range, [0.0, 1.0]))
+         
 
     def _reset_callback(self):
         """
@@ -98,6 +117,14 @@ class GripperCloseEnv(BulletRobotEnv):
         self.initial_state = list(zip(self.joints, initial_state))
 
         self.pos_range = [min(self.q_goal, initial_state[0]), max(self.q_goal, initial_state[0])]
+
+        # calculate timesteps needed to solve the env
+        self.d = np.abs(np.diff(self.pos_range))
+        self.tts = self.d/self.max_vel
+        self.steps = self.tts * self.rate
+        self.steps += 0.5*self.rate # add half a second to hold position -> max reward == 0.5*rate
+
+        self.t = 0
     
     def _is_success(self):
         """
