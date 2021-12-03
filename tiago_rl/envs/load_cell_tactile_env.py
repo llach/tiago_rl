@@ -210,7 +210,7 @@ class LoadCellTactileEnv(BulletRobotEnv):
 
 class GripperTactileEnv(LoadCellTactileEnv):
 
-    def __init__(self, initial_state=None, *args, **kwargs):
+    def __init__(self, initial_state=None, max_joint_vel=0.04, *args, **kwargs):
 
         joints = [
             'gripper_right_finger_joint',
@@ -223,8 +223,8 @@ class GripperTactileEnv(LoadCellTactileEnv):
         ]
 
         max_joint_velocities = {
-            'gripper_right_finger_joint': 0.08,
-            'gripper_left_finger_joint': 0.08,
+            'gripper_right_finger_joint': max_joint_vel,
+            'gripper_left_finger_joint': max_joint_vel,
         }
 
         LoadCellTactileEnv.__init__(self,

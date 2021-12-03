@@ -1,5 +1,8 @@
 <?xml version="1.0" ?>
 <robot name="boxBot">
+  <mujoco>
+        <compiler meshdir="./meshes/gripper/" balanceinertia="true" coordinate="local"/>
+    </mujoco>
     <material name="white">
         <color rgba="1 1 1 1"/>
     </material>

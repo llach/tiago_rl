@@ -21,7 +21,7 @@ class GripperCloseEnv(BulletRobotEnv):
         self.q_goal = 0.0
         self.joint_range = [0.001, 0.043]
         self.pos_range = [0.0, 0.043]
-        self.goal_margin = 0.0004
+        self.goal_margin = 0.0002
 
         self.obs_config = obs_config
         self.sample_initial = sample_initial
