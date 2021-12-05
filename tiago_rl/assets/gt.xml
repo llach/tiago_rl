@@ -1,10 +1,12 @@
 <mujoco model="boxBot">
-    <!-- <compiler angle="radian" meshdir="{trl_asset_dir}/meshes/gripper/" coordinate="local" /> -->
-    <compiler angle="radian" meshdir="./meshes/gripper/" coordinate="local" />
+    <compiler angle="radian" meshdir="{trl_asset_dir}/meshes/gripper/" coordinate="local" />
+    <!-- <compiler angle="radian" meshdir="./meshes/gripper/" coordinate="local" /> -->
     <size njmax="500" nconmax="100" />
 
     <asset>
         <texture type="skybox" builtin="gradient" rgb1="0.44 0.85 0.56" rgb2="0.46 0.87 0.58" width="32" height="32" />
+        <material name="robot_mat" shininess="0.03" specular="0.75" rgba="0.7 0.7 0.7 1" />
+        <material name="finger_mat" shininess="0.5" specular="0.75" rgba="0.3 0.3 0.3 1" />
 
         <mesh name="gripper_link_collision" file="gripper_link_collision.stl" />
         <mesh name="gripper_ta11_finger" file="gripper_finger_ta11_link.stl" />
@@ -12,23 +14,24 @@
 
     <worldbody>
 		<body name="base" pos="0 0 0">
-			<geom size="0.35 0.25 0.2" type="box" mass="2000" rgba="0.93 0.93 0.93 0.5" />
+            <light pos="0 0 3" mode="fixed" />
+			<geom size="0.25 0.25 0.2" type="box" mass="2000" material="robot_mat" />
 
             <body name="arm" pos="-0.19 0 0.25">
-                <geom quat="0.500048 0.5 -0.499952 -0.5" mass="20" type="mesh" rgba="1 1 1 0.5" mesh="gripper_link_collision" />
+                <geom quat="0.500048 0.5 -0.499952 -0.5" mass="20" type="mesh" material="robot_mat"  mesh="gripper_link_collision" />
 
                 <body name="gripper_right_finger_link" pos="0 0 0" euler="1.57 -1.57 0" >
                     <inertial pos="-0.00447 0.010766 -0.121013" quat="0.944415 0.0576483 0.0941322 -0.309671" mass="0.10998" diaginertia="0.000161667 0.000161667 0.000161667" />
                     <joint name="gripper_right_finger_joint" pos="0 0 0" axis="-1 0 0" type="slide" limited="true" range="0 0.043" />
 
-                    <geom size="0.005 0.025 0.055" pos="0 0 0" quat="0 0 0 1" type="mesh" mesh="gripper_ta11_finger" rgba="0.7 0.7 0.7 1" />
+                    <geom size="0.005 0.025 0.055" pos="0 0 0" quat="0 0 0 1" type="mesh" mesh="gripper_ta11_finger" material="finger_mat" />
                 </body>
 
                 <body name="gripper_left_finger_link" pos="0 0 0" euler="-1.57 -1.57 0">
                     <inertial pos="-0.00447 0.010766 -0.121013" quat="0.424708 0.17592 -0.339851 0.820473" mass="0.10998" diaginertia="0.001 0.001 0.001" />
                     <joint name="gripper_left_finger_joint" pos="0 0 0" axis="-1 0 0" type="slide" limited="true" range="0 0.043"/>
 
-                    <geom size="0.005 0.025 0.055" pos="0 0 0" quat="0 0 0 1" type="mesh" mesh="gripper_ta11_finger" rgba="0.7 0.7 0.7 1" />
+                    <geom size="0.005 0.025 0.055" pos="0 0 0" quat="0 0 0 1" type="mesh" mesh="gripper_ta11_finger" material="finger_mat" />
                 </body>
             </body>
 		</body>
