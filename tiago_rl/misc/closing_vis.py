@@ -102,20 +102,36 @@ class ClosingVisualiser:
 
     def _add_target_lines(self):
         tf = self.env.q_goal
+        tfp = self.env.q_goal + self.env.goal_margin
+        tfm = self.env.q_goal - self.env.goal_margin
+
         self.raw_target_line = pg.InfiniteLine(
             pos=tf,
             angle=0
         )
+        p={'color': "#D3D3D3", 'width': 0.5, 'style': QtCore.Qt.DotLine}
+        self.raw_target_linep = pg.InfiniteLine(
+            pos=tfp,
+            angle=0,
+            pen=p,
+        )
+        self.raw_target_linem = pg.InfiniteLine(
+            pos=tfm,
+            angle=0,
+            pen=p,
+        )
 
-        for pl, ln in zip([self.pl_q], [self.raw_target_line]):
-            pl.addItem(ln)
+        for ln in [self.raw_target_line, self.raw_target_linep, self.raw_target_linem]:
+            self.pl_q.addItem(ln)
 
-            # always show target force in ticks
-            self._pos_ticks()
+        # always show target force in ticks
+        self._pos_ticks()
     
     def reset_target_lines(self):
         if hasattr(self, "raw_target_line"):
             self.pl_q.removeItem(self.raw_target_line)
+            self.pl_q.removeItem(self.raw_target_linep)
+            self.pl_q.removeItem(self.raw_target_linem)
 
         self._add_target_lines()
 
