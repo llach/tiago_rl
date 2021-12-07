@@ -7,6 +7,7 @@ class ObsConfig(str, Enum):
     GOAL_DELTA = "goal_delta"
     POSITIONS = "positions"
     VELOCITIES = "velocities"
+    FORCES = "forces"
 
 class RewardTypes(str, Enum):
     CONTINUOUS = "continuous"
