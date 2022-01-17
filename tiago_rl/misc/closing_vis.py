@@ -61,12 +61,26 @@ class ClosingVisualiser:
 
         self.win.nextRow()
 
+        self.pl_error = self.win.addPlot(title="State Error")
         self.pl_rewa = self.win.addPlot(title="Reward")
+
+        self.pl_error.setYRange(-0.045, 0.045)
+        self.pl_rewa.setYRange(-1.1, 6.2)
+
+        self.err_0_line = pg.InfiniteLine(
+            pos=0,
+            angle=0,
+            pen={'color': "#D3D3D3", 'width': 0.5, 'style': QtCore.Qt.DotLine}
+        )
+        self.pl_error.addItem(self.err_0_line)
 
         self.all_plots = [self.pl_q, self.pl_vel, self.pl_rewa]
 
         # curves
         self.curve_rewa = self.pl_rewa.plot(pen='b')
+
+        self.curve_err_r = self.pl_error.plot(pen="r")
+        self.curve_err_l = self.pl_error.plot(pen="y")
 
         self.curve_currq_r = self.pl_q.plot(pen='r')
         self.curve_currq_l = self.pl_q.plot(pen='y')
@@ -93,6 +107,9 @@ class ClosingVisualiser:
 
         self.vel_r = []
         self.vel_l = []
+
+        self.err_r = []
+        self.err_l = []
 
 
     def _pos_ticks(self):
@@ -157,6 +174,10 @@ class ClosingVisualiser:
         self.rs.append(reward)
         self.rewa.append(np.sum(self.rs))
 
+        errors = self.env._goal_delta(self.env.current_pos)
+        self.err_r.append(errors[0])
+        self.err_l.append(errors[1])
+
         jq, jv = self.env.get_state_dicts()
         dq = self.env.get_desired_q_dict()
 
@@ -180,6 +201,9 @@ class ClosingVisualiser:
 
         self.curve_currv_r.setData(self.vel_r)
         self.curve_currv_l.setData(self.vel_l)
+
+        self.curve_err_r.setData(self.err_r)
+        self.curve_err_l.setData(self.err_l)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux
