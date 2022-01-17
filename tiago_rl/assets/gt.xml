@@ -49,8 +49,8 @@
     </contact>
 
     <actuator>
-                                                                                                <!--  Kp    Ti    Td   iClamp   errBand   iSmooth   -->  
-        <general ctrlrange='0.0 0.043' gaintype="user" biastype="user" forcerange="-100 100" gainprm="2.0   10.0   0.5   0.1       0.1      0.0" joint="gripper_left_finger_joint" name="glact"/>
-        <general ctrlrange='0.0 0.043' gaintype="user" biastype="user" forcerange="-100 100" gainprm="2.0   10.0   0.5   0.1       0.1      0.0" joint="gripper_right_finger_joint" name="gract"/>
+                                                                                                <!--  Kp=2   Ti=10  Td   iClamp   errBand   iSmooth   -->  
+        <general ctrlrange='0.0 0.043' gaintype="user" biastype="user" forcerange="-100 100" gainprm="{kp}   {ti}   0.5   0.1       0.1      0.0" joint="gripper_left_finger_joint" name="glact"/>
+        <general ctrlrange='0.0 0.043' gaintype="user" biastype="user" forcerange="-100 100" gainprm="{kp}   {ti}   0.5   0.1       0.1      0.0" joint="gripper_right_finger_joint" name="gract"/>
     </actuator>
 </mujoco>
