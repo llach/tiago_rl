@@ -13,3 +13,4 @@ class RewardTypes(str, Enum):
 class ControlMode(str, Enum):
     POS_CTRL = 'pos'
     VEL_CTRL = 'vel'
+    POS_DELTA_CTRL = 'pos_delta'

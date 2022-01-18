@@ -5,7 +5,7 @@ import pyqtgraph as pg
 
 import platform
 
-from tiago_rl.envs.bullet_robot_env import POS_CTRL, VEL_CTRL
+from tiago_rl.enums import ControlMode
 
 
 class ClosingVisualiser:
@@ -88,10 +88,10 @@ class ClosingVisualiser:
         self.curve_currv_r = self.pl_vel.plot(pen='r')
         self.curve_currv_l = self.pl_vel.plot(pen='y')
 
-        if env.control_mode == POS_CTRL:
+        if env.control_mode == ControlMode.POS_CTRL or env.control_mode == ControlMode.POS_DELTA_CTRL:
             self.curve_des_r = self.pl_q.plot(pen='c')
             self.curve_des_l = self.pl_q.plot(pen='b')
-        elif env.control_mode == VEL_CTRL:
+        elif env.control_mode == ControlMode.VEL_CTRL:
             self.curve_des_r = self.pl_vel.plot(pen='c')
             self.curve_des_l = self.pl_vel.plot(pen='b')
 
@@ -181,8 +181,12 @@ class ClosingVisualiser:
         jq, jv = self.env.get_state_dicts()
         dq = self.env.get_desired_q_dict()
 
-        self.des_r.append((dq['gripper_right_finger_joint']))
-        self.des_l.append((dq['gripper_left_finger_joint']))
+        if self.env.control_mode == ControlMode.POS_CTRL:
+            self.des_r.append((dq['gripper_right_finger_joint']))
+            self.des_l.append((dq['gripper_left_finger_joint']))
+        elif self.env.control_mode == ControlMode.POS_DELTA_CTRL:
+            self.des_r.append((dq['gripper_right_finger_joint']+jq['gripper_right_finger_joint']))
+            self.des_l.append((dq['gripper_left_finger_joint']+jq['gripper_left_finger_joint']))
 
         self.currq_r.append((jq['gripper_right_finger_joint']))
         self.currq_l.append((jq['gripper_left_finger_joint']))
