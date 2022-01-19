@@ -65,7 +65,7 @@ class ClosingVisualiser:
         self.pl_rewa = self.win.addPlot(title="Reward")
 
         self.pl_error.setYRange(-0.045, 0.045)
-        self.pl_rewa.setYRange(-1.1, 6.2)
+        self.pl_rewa.setYRange(-1.1, 20.5)
 
         self.err_0_line = pg.InfiniteLine(
             pos=0,
