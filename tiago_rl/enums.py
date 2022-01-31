@@ -14,3 +14,8 @@ class ControlMode(str, Enum):
     POS_CTRL = 'pos'
     VEL_CTRL = 'vel'
     POS_DELTA_CTRL = 'pos_delta'
+
+class ActionPenalty(str, Enum):
+    NONE = "none"
+    ERROR = "error"
+    ERR_DELTA_VEL = "error_delta_velocity"
