@@ -18,4 +18,5 @@ class ControlMode(str, Enum):
 class ActionPenalty(str, Enum):
     NONE = "none"
     ERROR = "error"
+    MAG = "magnitude"
     ERR_DELTA_VEL = "error_delta_velocity"
