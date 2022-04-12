@@ -12,7 +12,7 @@ class RewardTypes(str, Enum):
 
 class ControlMode(str, Enum):
     POS_CTRL = 'pos'
-    VEL_CTRL = 'vel'
+    VMAX_CTRL = 'v_max'
     POS_DELTA_CTRL = 'pos_delta'
 
 class ActionPenalty(str, Enum):

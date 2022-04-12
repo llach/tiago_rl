@@ -88,12 +88,9 @@ class ClosingVisualiser:
         self.curve_currv_r = self.pl_vel.plot(pen='r')
         self.curve_currv_l = self.pl_vel.plot(pen='y')
 
-        if env.control_mode == ControlMode.POS_CTRL or env.control_mode == ControlMode.POS_DELTA_CTRL:
-            self.curve_des_r = self.pl_q.plot(pen='c')
-            self.curve_des_l = self.pl_q.plot(pen='b')
-        elif env.control_mode == ControlMode.VEL_CTRL:
-            self.curve_des_r = self.pl_vel.plot(pen='c')
-            self.curve_des_l = self.pl_vel.plot(pen='b')
+        # if env.control_mode == ControlMode.POS_CTRL or env.control_mode == ControlMode.POS_DELTA_CTRL:
+        self.curve_des_r = self.pl_q.plot(pen='c')
+        self.curve_des_l = self.pl_q.plot(pen='b')
 
         # buffers for plotted data
         self.rs = []
