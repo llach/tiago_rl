@@ -1,4 +1,6 @@
+mujoco
+mujoco-python-viewer
+PyYaml
+
 pyqtgraph
-pybullet
 pyqt5
-gym
