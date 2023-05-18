@@ -1,5 +1,6 @@
 import mujoco
 import numpy as np
+import xml.etree.ElementTree as ET
 
 from gymnasium import utils
 from gymnasium.spaces import Box
@@ -24,9 +25,14 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 100,
     }
 
-    def __init__(self, **kwargs):
+    INITIAL_OBJECT_POS = np.array([0,0,0.67])
+
+    def __init__(self, fgoal=0.6, ftheta=0.01, **kwargs):
+        self.fgoal = fgoal
+        self.ftheta = ftheta # threshold for contact/no contact
+
         utils.EzPickle.__init__(self, **kwargs)
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(23,), dtype=np.float64) # TODO check
+        observation_space = Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64) # TODO check
 
         MujocoEnv.__init__(
             self,
@@ -38,6 +44,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         )
 
         self._reset_simulation()
+
+        # robot state variables
+        self.q = np.array([0.045, 0.045])
+        self.qdot = np.array([0,0])
+        self.forces = np.array([0,0])
+        self.in_contact = np.array([False, False])
     
     def _name_2_qpos_id(self, name):
         """ given a joint name, return their `qpos`-array address
@@ -48,7 +60,26 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def _reset_simulation(self):
         """ reset data, set joints to initial positions and randomize
         """
-        mujoco.mj_resetData(self.model, self.data)
+        xmlmodel = ET.parse(self.fullpath)
+        root = xmlmodel.getroot()
+
+        #-----------------------------
+        # random object start 
+
+        object_pos = self.INITIAL_OBJECT_POS.copy()
+        object_pos[1] = round(np.random.uniform(-0.03, 0.03), 3)
+
+        obj = root.findall(".//body[@name='object']")[0]
+        obj.attrib['pos'] = ' '.join(map(str, object_pos))
+
+        self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
+        self.model.vis.global_.offwidth = self.width
+        self.model.vis.global_.offheight = self.height
+        self.data  = mujoco.MjData(self.model)
+
+        # update renderer's pointers, otherwise scene will be empty
+        self.mujoco_renderer.model = self.model
+        self.mujoco_renderer.data  = self.data
         
         self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
         self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
@@ -75,6 +106,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def step(self, a):
         """
         action: [q_left, q_right]
+
+        returns:
+            observations
+            reward
+            terminated
+            truncated
+            info
         """
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
@@ -82,10 +120,44 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if self.render_mode == "human":
             self.render()
 
+        ### update relevant robot state variables 
+        # joint states
+        self.q = np.array([
+            self.data.joint("gripper_left_finger_joint").qpos[0],
+            self.data.joint("gripper_right_finger_joint").qpos[0]
+        ])
+        self.qdot = np.array([
+            self.data.joint("gripper_left_finger_joint").qvel[0],
+            self.data.joint("gripper_right_finger_joint").qvel[0]
+        ])
+        self.qacc = np.array([
+            self.data.joint("gripper_left_finger_joint").qacc[0],
+            self.data.joint("gripper_right_finger_joint").qacc[0]
+        ])
+
+        # forces
+        self.forces = np.array([
+            self.data.sensor("left_touch_sensor").data[0],
+            self.data.sensor("right_touch_sensor").data[0],
+        ])
+        self.in_contact = self.forces > self.ftheta
+
+        # object state
+        self.objv = np.linalg.norm(self.data.joint("object_joint").qvel[:3])
+        self.objw = np.linalg.norm(self.data.joint("object_joint").qvel[3:])
+
+        self.r = self.fgoal - np.sum(self.forces)
+        
         return (
-            [],
-            [],
-            False,
-            False,
-            {},
+            np.concatenate([
+                self.q, 
+                self.qdot, 
+                self.forces, 
+                self.in_contact, 
+                [self.objv, self.objw]
+            ]),
+            self.r,
+            False,  # terminated
+            False,  # truncated
+            {},     # info
         )

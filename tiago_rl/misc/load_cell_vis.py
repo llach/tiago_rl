@@ -1,11 +1,10 @@
 import numpy as np
 
 from pyqtgraph.Qt import QtGui, QtCore
+from PyQt6 import QtWidgets 
 import pyqtgraph as pg
 
 import platform
-
-from tiago_rl.envs.bullet_robot_env import POS_CTRL, VEL_CTRL
 
 
 class LoadCellVisualiser:
@@ -15,7 +14,7 @@ class LoadCellVisualiser:
         self.env = env
 
         # create QT Application
-        self.app = QtGui.QApplication([])
+        self.app = QtWidgets.QApplication([])
 
         # configure window
         self.win = pg.GraphicsLayoutWidget(show=True, )
@@ -32,14 +31,14 @@ class LoadCellVisualiser:
         self.pl_force = self.win.addPlot(title="Contact Forces")
         self.pl_cntct = self.win.addPlot(title="In Contact?")
 
-        self.pl_cntct.setYRange(-0.05, 1.05)
+        self.pl_cntct.setYRange(-0.09, 1.15)
 
         self._add_target_force_lines()
 
         # draw lines at threshold force
         for pl in [self.pl_force]:
             threshold_line = pg.InfiniteLine(
-                pos=env.force_threshold,
+                pos=env.ftheta,
                 angle=0
             )
             pl.addItem(threshold_line)
@@ -57,51 +56,53 @@ class LoadCellVisualiser:
         ticks = [0.045, 0.02, 0.0]
         ay.setTicks([[(v, str(v)) for v in ticks]])
 
-        # draw velocity maximums, set range and ticks
-        if env.max_joint_velocities:
-            self.max_vel = np.abs(list(env.max_joint_velocities.values())[0])
+        # draw velocity maxima, set range and ticks
+        self.max_vel = 0.02 # m/s
 
-            max_line = pg.InfiniteLine(
-                pos=self.max_vel,
-                angle=0
-            )
-            neg_max_line = pg.InfiniteLine(
-                pos=-self.max_vel,
-                angle=0
-            )
+        max_line = pg.InfiniteLine(
+            pos=self.max_vel,
+            angle=0
+        )
+        neg_max_line = pg.InfiniteLine(
+            pos=-self.max_vel,
+            angle=0
+        )
 
-            self.pl_vel.addItem(max_line)
-            self.pl_vel.addItem(neg_max_line)
+        self.pl_vel.addItem(max_line)
+        self.pl_vel.addItem(neg_max_line)
 
-            self.pl_vel.setYRange(-self.max_vel * 1.1, self.max_vel * 1.1)
+        self.pl_vel.setYRange(-self.max_vel * 1.3, self.max_vel * 1.3)
 
-            ay = self.pl_vel.getAxis('left')
-            ticks = [-self.max_vel, 0, self.max_vel]
-            ay.setTicks([[(v, str(v)) for v in ticks]])
+        ay = self.pl_vel.getAxis('left')
+        ticks = [-self.max_vel, 0, self.max_vel]
+        ay.setTicks([[(v, str(v)) for v in ticks]])
 
         self.win.nextRow()
 
-        self.pl_obj_lin_vel = self.win.addPlot(title="Linear Object Velocity")
+        self.pl_obj_vel = self.win.addPlot(title="Object Velocity")
         self.pl_joint_acc = self.win.addPlot(title="Joint Accelerations")
 
-        self.pl_obj_lin_vel.setYRange(-0.02, 0.2)
-        self.pl_joint_acc.setYRange(-2.2*self.max_vel, 2.2*self.max_vel)
+        self.pl_obj_vel.setYRange(-0.02, 0.8)
+        self.pl_obj_vel.showAxis('right')
+
+        self.pl_joint_acc.setYRange(-6.2, 6.2)
+        ay = self.pl_joint_acc.getAxis('left')
+        ticks = [-4.0, 0, 4.0]
+        ay.setTicks([[(v, str(v)) for v in ticks]])
 
         self.win.nextRow()
 
         self.pl_succ = self.win.addPlot(title="Success State")
         self.pl_rewa = self.win.addPlot(title="Reward")
 
-        self.pl_succ.setYRange(-0.2, 1.2)
-
         self.win.nextRow()
 
-        self.pl_force_rew = self.win.addPlot(title="Force Reward")
-        self.pl_ovel_rew = self.win.addPlot(title="Obj.Vel. Reward")
+        # self.pl_force_rew = self.win.addPlot(title="Force Reward")
+        # self.pl_ovel_rew = self.win.addPlot(title="Obj.Vel. Reward")
 
-        self.pl_ovel_rew.setYRange(0.01, -1.0)
+        # self.pl_ovel_rew.setYRange(0.01 -1.0)
 
-        self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_lin_vel,
+        self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_vel,
                           self.pl_joint_acc, self.pl_q, self.pl_vel,
                           self.pl_force, self.pl_cntct]
 
@@ -117,23 +118,20 @@ class LoadCellVisualiser:
         self.curve_currv_r = self.pl_vel.plot(pen='r')
         self.curve_currv_l = self.pl_vel.plot(pen='y')
 
-        if env.control_mode == POS_CTRL:
-            self.curve_des_r = self.pl_q.plot(pen='c')
-            self.curve_des_l = self.pl_q.plot(pen='b')
-        elif env.control_mode == VEL_CTRL:
-            self.curve_des_r = self.pl_vel.plot(pen='c')
-            self.curve_des_l = self.pl_vel.plot(pen='b')
+        self.curve_des_r = self.pl_q.plot(pen='c')
+        self.curve_des_l = self.pl_q.plot(pen='b')
 
         self.curve_currq_r = self.pl_q.plot(pen='r')
         self.curve_currq_l = self.pl_q.plot(pen='y')
 
-        self.curve_obj_lin_vel = self.pl_obj_lin_vel.plot(pen='m')
+        self.curve_objv = self.pl_obj_vel.plot(pen='m')
+        self.curve_objw = self.pl_obj_vel.plot(pen='b')
 
         self.curve_acc_r = self.pl_joint_acc.plot(pen='r')
         self.curve_acc_l = self.pl_joint_acc.plot(pen='y')
 
-        self.curve_force_rew = self.pl_force_rew.plot()
-        self.curve_ovel_rew = self.pl_ovel_rew.plot()
+        # self.curve_force_rew = self.pl_force_rew.plot()
+        # self.curve_ovel_rew = self.pl_ovel_rew.plot()
 
         # buffers for plotted data
         self.raw_r = []
@@ -155,8 +153,8 @@ class LoadCellVisualiser:
 
         self.rs = []
 
-        self.obj_lin = []
-        self.obj_ang = []
+        self.objvs = []
+        self.objws = []
 
         self.dv_force_r = []
         self.dv_force_l = []
@@ -168,10 +166,11 @@ class LoadCellVisualiser:
         self.ovel_rew = []
 
     def _add_target_force_lines(self):
-        tf = self.env.target_forces[0]
+        tf = self.env.fgoal
         self.raw_target_line = pg.InfiniteLine(
             pos=tf,
-            angle=0
+            angle=0,
+            pen={'color': "#00FF00"}
         )
 
         for pl, ln in zip([self.pl_force], [self.raw_target_line]):
@@ -202,51 +201,43 @@ class LoadCellVisualiser:
                 )
             )
 
-    def update_plot(self, is_success, reward):
+    def update_plot(self, action, reward):
         self.t += 1
 
         # store new data
-        self.raw_r.append(self.env.current_forces_raw[0])
-        self.raw_l.append(self.env.current_forces_raw[1])
+        self.raw_l.append(self.env.forces[0])
+        self.raw_r.append(self.env.forces[1])
 
-        self.curr_r.append(self.env.in_contact[0])
-        self.curr_l.append(self.env.in_contact[1])
+        self.curr_l.append(self.env.in_contact[0])
+        self.curr_r.append(self.env.in_contact[1])
 
-        self.succ.append(is_success)
         self.rs.append(reward)
         self.rewa.append(np.sum(self.rs))
 
-        jq, jv = self.env.get_state_dicts()
-        dq = self.env.get_desired_q_dict()
+        self.des_l.append(action[0])
+        self.des_r.append(action[1])
 
-        self.des_r.append((dq['gripper_right_finger_joint']))
-        self.des_l.append((dq['gripper_left_finger_joint']))
+        self.currq_l.append(self.env.q[0])
+        self.currq_r.append(self.env.q[1])
 
-        self.currq_r.append((jq['gripper_right_finger_joint']))
-        self.currq_l.append((jq['gripper_left_finger_joint']))
+        self.vel_l.append(self.env.qdot[0])
+        self.vel_r.append(self.env.qdot[1])
 
-        self.vel_r.append((jv['gripper_right_finger_joint']))
-        self.vel_l.append((jv['gripper_left_finger_joint']))
-
-        obj_v = self.env.get_object_velocity()
-
-        self.obj_lin.append(np.linalg.norm(obj_v[0]))
-        self.obj_ang.append(np.linalg.norm(obj_v[1]))
+        self.objvs.append(self.env.objv)
+        self.objws.append(self.env.objw)
 
         if len(self.dv_force_l) == 0:
             self.dv_force_l.append(0)
             self.dv_force_r.append(0)
-            self.accel_l.append(0)
-            self.accel_r.append(0)
         else:
             self.dv_force_r.append((self.raw_r[-2]-self.raw_r[-1])/self.env.dt)
             self.dv_force_l.append((self.raw_l[-2]-self.raw_l[-1])/self.env.dt)
 
-        self.accel_r.append(self.env.current_acc[0])
-        self.accel_l.append(self.env.current_acc[1])
+        self.accel_l.append(self.env.qacc[0])
+        self.accel_r.append(self.env.qacc[1])
 
-        self.force_rew.append(self.env.force_rew)
-        self.ovel_rew.append(self.env.obj_vel_rew)
+        # self.force_rew.append(self.env.force_rew)
+        # self.ovel_rew.append(self.env.obj_vel_rew)
 
         # plot new data
         self.curve_raw_r.setData(self.raw_r)
@@ -267,13 +258,14 @@ class LoadCellVisualiser:
         self.curve_currv_r.setData(self.vel_r)
         self.curve_currv_l.setData(self.vel_l)
 
-        self.curve_obj_lin_vel.setData(self.obj_lin)
+        self.curve_objv.setData(self.objvs)
+        self.curve_objw.setData(self.objws)
 
         self.curve_acc_r.setData(self.accel_r)
         self.curve_acc_l.setData(self.accel_l)
 
-        self.curve_force_rew.setData(self.force_rew)
-        self.curve_ovel_rew.setData(self.ovel_rew)
+        # self.curve_force_rew.setData(self.force_rew)
+        # self.curve_ovel_rew.setData(self.ovel_rew)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux
