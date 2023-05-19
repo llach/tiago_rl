@@ -7,29 +7,32 @@ from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import plot_results
 
-from tiago_rl.envs import GripperTactileCloseEnv
-from tiago_rl.misc import SaveOnBestTrainingRewardCallback
+from tiago_rl.envs.gripper_env import GripperEnv
+from tiago_experiments import SaveOnBestTrainingRewardCallback
 
-from gym.wrappers import TimeLimit
+from gymnasium.wrappers import TimeLimit
 
 # Create log dir
+timesteps = 1e6
 log_dir = "/tmp/"
 os.makedirs(log_dir, exist_ok=True)
 
 # Environment setup
 # ----------------------------
-force_type = 'binary'
-target_forces = np.array([1.0, 1.0])
-
-env = GripperTactileCloseEnv(target_forces=target_forces, force_type=force_type)
-env = TimeLimit(env, max_episode_steps=300)
+env = GripperEnv()
+env = TimeLimit(env, max_episode_steps=500)
 env = Monitor(env, log_dir)
 
 model = PPO('MlpPolicy', env, verbose=1)
-callback = SaveOnBestTrainingRewardCallback(check_freq=100, save_path=log_dir)
+callback = SaveOnBestTrainingRewardCallback(env=env,
+                                            check_freq=2000,
+                                            total_steps=2e4,
+                                            save_path=log_dir,
+                                            step_offset=0,
+                                            mean_n=20
+                                            )
 
 # Train the agent
-timesteps = 2e4
 model.learn(total_timesteps=int(timesteps), callback=callback)
 
 plot_results([log_dir], timesteps, results_plotter.X_TIMESTEPS, "Gripper Closing Environment")

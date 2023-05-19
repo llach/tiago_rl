@@ -28,11 +28,11 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
     def __init__(self, fgoal=0.6, ftheta=0.01, **kwargs):
-        self.fgoal = fgoal
-        self.ftheta = ftheta # threshold for contact/no contact
+        self.fgoal  = fgoal     # object goal froce (sum of total object forces)
+        self.ftheta = ftheta    # threshold for contact/no contact
 
         utils.EzPickle.__init__(self, **kwargs)
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64) # TODO check
+        observation_space = Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64)
 
         MujocoEnv.__init__(
             self,
@@ -43,13 +43,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             **kwargs,
         )
 
-        self._reset_simulation()
-
-        # robot state variables
-        self.q = np.array([0.045, 0.045])
-        self.qdot = np.array([0,0])
-        self.forces = np.array([0,0])
-        self.in_contact = np.array([False, False])
+        # reload the model with environment randomization
+        self.reset_model()
     
     def _name_2_qpos_id(self, name):
         """ given a joint name, return their `qpos`-array address
@@ -57,33 +52,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         jid =self.data.joint(name).id
         return self.model.jnt_qposadr[jid]
     
-    def _reset_simulation(self):
-        """ reset data, set joints to initial positions and randomize
-        """
-        xmlmodel = ET.parse(self.fullpath)
-        root = xmlmodel.getroot()
-
-        #-----------------------------
-        # random object start 
-
-        object_pos = self.INITIAL_OBJECT_POS.copy()
-        object_pos[1] = round(np.random.uniform(-0.03, 0.03), 3)
-
-        obj = root.findall(".//body[@name='object']")[0]
-        obj.attrib['pos'] = ' '.join(map(str, object_pos))
-
-        self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
-        self.model.vis.global_.offwidth = self.width
-        self.model.vis.global_.offheight = self.height
-        self.data  = mujoco.MjData(self.model)
-
-        # update renderer's pointers, otherwise scene will be empty
-        self.mujoco_renderer.model = self.model
-        self.mujoco_renderer.data  = self.data
-        
-        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
-        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
-
     def _set_action_space(self):
         """ torso joint is ignored, this env is for gripper behavior only
         """
@@ -102,24 +70,10 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         aout[self.data.actuator("gripper_right_finger_joint").id] = ain[1]
 
         return aout
-
-    def step(self, a):
+    
+    def _update_state(self):
+        """ updates internal state variables that may be used as observations
         """
-        action: [q_left, q_right]
-
-        returns:
-            observations
-            reward
-            terminated
-            truncated
-            info
-        """
-        
-        # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
-        self._step_mujoco_simulation(self._make_action(a), self.frame_skip)
-        if self.render_mode == "human":
-            self.render()
-
         ### update relevant robot state variables 
         # joint states
         self.q = np.array([
@@ -146,16 +100,69 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.objv = np.linalg.norm(self.data.joint("object_joint").qvel[:3])
         self.objw = np.linalg.norm(self.data.joint("object_joint").qvel[3:])
 
-        self.r = self.fgoal - np.sum(self.forces)
-        
-        return (
-            np.concatenate([
+    def _get_obs(self):
+        """ concatenate internal state as observation
+        """
+        return np.concatenate([
                 self.q, 
                 self.qdot, 
                 self.forces, 
                 self.in_contact, 
                 [self.objv, self.objw]
-            ]),
+            ])
+
+    def reset_model(self):
+        """ reset data, set joints to initial positions and randomize
+        """
+        xmlmodel = ET.parse(self.fullpath)
+        root = xmlmodel.getroot()
+
+        #-----------------------------
+        # random object start 
+
+        object_pos = self.INITIAL_OBJECT_POS.copy()
+        object_pos[1] = round(np.random.uniform(-0.03, 0.03), 3)
+
+        obj = root.findall(".//body[@name='object']")[0]
+        obj.attrib['pos'] = ' '.join(map(str, object_pos))
+
+        self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
+        self.model.vis.global_.offwidth = self.width
+        self.model.vis.global_.offheight = self.height
+        self.data  = mujoco.MjData(self.model)
+
+        # update renderer's pointers, otherwise scene will be empty
+        self.mujoco_renderer.model = self.model
+        self.mujoco_renderer.data  = self.data
+        
+        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
+        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
+
+        self._update_state()
+        return self._get_obs()
+
+    def step(self, a):
+        """
+        action: [q_left, q_right]
+
+        returns:
+            observations
+            reward
+            terminated
+            truncated
+            info
+        """
+        
+        # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
+        self._step_mujoco_simulation(self._make_action(a), self.frame_skip)
+        if self.render_mode == "human":
+            self.render()
+
+        self._update_state()
+        self.r = self.fgoal - np.sum(self.forces)
+        
+        return (
+            self._get_obs(),
             self.r,
             False,  # terminated
             False,  # truncated

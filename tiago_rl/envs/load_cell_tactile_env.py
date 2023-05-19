@@ -1,8 +1,4 @@
 import numpy as np
-import pybullet as p
-
-from tiago_rl.envs import BulletRobotEnv
-from tiago_rl.envs.utils import link_to_idx
 
 
 def force_delta(force_a, force_b):
@@ -29,7 +25,7 @@ SPARSE_REWARDS = 'sparse'
 CONT_REWARDS = 'continuous'
 
 
-class LoadCellTactileEnv(BulletRobotEnv):
+class LoadCellTactileEnv():
 
     def __init__(self, joints, force_noise_mu=None, force_noise_sigma=None, target_force=None, force_type=None, reward_type=None, object_velocity_rew_coef=None, width_range=None, location_sampling=False, shape_sampling=False, *args, **kwargs):
 
@@ -88,8 +84,6 @@ class LoadCellTactileEnv(BulletRobotEnv):
         self.obj_col_id = None
         self.object_type = None
         self.object_id = None
-
-        BulletRobotEnv.__init__(self, joints=joints, *args, **kwargs)
         
     # BulletRobotEnv methods
     # ----------------------------
