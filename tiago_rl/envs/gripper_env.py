@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.envs.mujoco.mujoco_rendering import WindowViewer
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -27,9 +28,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, fgoal=0.6, ftheta=0.01, **kwargs):
-        self.fgoal  = fgoal     # object goal froce (sum of total object forces)
+    def __init__(self, ftheta=0.01, fgoal_range=[0.05, 0.6], **kwargs):
         self.ftheta = ftheta    # threshold for contact/no contact
+        self.fgoal_range = fgoal_range # sampling range for fgoal
 
         utils.EzPickle.__init__(self, **kwargs)
         observation_space = Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64)
@@ -126,17 +127,28 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, object_pos))
 
+        # create model from modified XML and set vis parameters
         self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
         self.model.vis.global_.offwidth = self.width
         self.model.vis.global_.offheight = self.height
+
+        # load data, set starting joint values (open gripper)
         self.data  = mujoco.MjData(self.model)
+        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
+        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
+
+        # sample goal force
+        self.fgoal = round(np.random.uniform(*[0.05, 0.6]), 3)
 
         # update renderer's pointers, otherwise scene will be empty
         self.mujoco_renderer.model = self.model
         self.mujoco_renderer.data  = self.data
         
-        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
-        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
+        # viewers' models also need to be updated 
+        if len(self.mujoco_renderer._viewers)>0:
+            for _, v in self.mujoco_renderer._viewers.items():
+                v.model = self.model
+                v.data = self.data
 
         self._update_state()
         return self._get_obs()
@@ -158,12 +170,16 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if self.render_mode == "human":
             self.render()
 
+        # update internal state variables
         self._update_state()
-        self.r = self.fgoal - np.sum(self.forces)
+
+        # calculate reward
+        fdelta = self.fgoal - np.sum(self.forces)
+        fdelta = -np.abs(fdelta) # abs: same sign for overshooting forces and too little force; - penalize differences from fgoal
         
         return (
             self._get_obs(),
-            self.r,
+            fdelta,
             False,  # terminated
             False,  # truncated
             {},     # info

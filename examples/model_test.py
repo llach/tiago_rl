@@ -7,11 +7,14 @@ from tiago_rl.misc.load_cell_vis import LoadCellVisualiser
 env = GripperEnv(render_mode="human")
 vis = LoadCellVisualiser(env)
 
-print(env._get_obs())
-# for _ in range(1000):
-#     action = [0.00, 0.00]
-#     obs, r, _, _, _ = env.step(action)
-#     vis.update_plot(action=action, reward=r)
+for i in range(1000):
+    if i % 50 == 0: 
+        env.reset()
+        vis.reset()
+
+    action = [0.00, 0.00]
+    obs, r, _, _, _ = env.step(action)
+    vis.update_plot(action=action, reward=r)
 env.close()
 exit(0)
 

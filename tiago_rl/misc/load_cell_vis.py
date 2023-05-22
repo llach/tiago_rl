@@ -166,7 +166,7 @@ class LoadCellVisualiser:
         self.ovel_rew = []
 
     def _add_target_force_lines(self):
-        tf = self.env.fgoal
+        tf = self.env.fgoal/2
         self.raw_target_line = pg.InfiniteLine(
             pos=tf,
             angle=0,
@@ -195,8 +195,8 @@ class LoadCellVisualiser:
             pl.addItem(
                 pg.InfiniteLine(
                     pos=self.t,
-                    pen={'color': "#D3D3D3", 'width': 1.5,
-                         'style': QtCore.Qt.DotLine},
+                    pen={'color': "#D3D3D3", 'width': 1.5},
+                        #  'style': QtCore.Qt.DotLine},
                     angle=90
                 )
             )
