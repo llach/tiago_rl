@@ -92,7 +92,7 @@ class LoadCellVisualiser:
 
         self.win.nextRow()
 
-        self.pl_succ = self.win.addPlot(title="Success State")
+        self.pl_contact = self.win.addPlot(title="In Contact")
         self.pl_rewa = self.win.addPlot(title="Reward")
 
         self.win.nextRow()
@@ -102,7 +102,7 @@ class LoadCellVisualiser:
 
         # self.pl_ovel_rew.setYRange(0.01 -1.0)
 
-        self.all_plots = [self.pl_rewa, self.pl_succ, self.pl_obj_vel,
+        self.all_plots = [self.pl_rewa, self.pl_contact, self.pl_obj_vel,
                           self.pl_joint_acc, self.pl_q, self.pl_vel,
                           self.pl_force, self.pl_cntct]
 
@@ -112,7 +112,9 @@ class LoadCellVisualiser:
         self.curve_curr_r = self.pl_cntct.plot(pen='r')
         self.curve_curr_l = self.pl_cntct.plot(pen='y')
 
-        self.curve_succ = self.pl_succ.plot(pen='g')
+        self.curve_cont_r = self.pl_contact.plot(pen='g')
+        self.curve_cont_l = self.pl_contact.plot(pen='b')
+
         self.curve_rewa = self.pl_rewa.plot(pen='b')
 
         self.curve_currv_r = self.pl_vel.plot(pen='r')
@@ -140,7 +142,8 @@ class LoadCellVisualiser:
         self.curr_r = []
         self.curr_l = []
 
-        self.succ = []
+        self.cont_r = []
+        self.cont_l = []
         self.rewa = []
 
         self.des_r = []
@@ -226,6 +229,9 @@ class LoadCellVisualiser:
         self.objvs.append(self.env.objv)
         self.objws.append(self.env.objw)
 
+        self.cont_l.append(self.env.in_contact[0])
+        self.cont_r.append(self.env.in_contact[1])
+
         if len(self.dv_force_l) == 0:
             self.dv_force_l.append(0)
             self.dv_force_r.append(0)
@@ -246,7 +252,8 @@ class LoadCellVisualiser:
         self.curve_curr_r.setData(self.curr_r)
         self.curve_curr_l.setData(self.curr_l)
 
-        self.curve_succ.setData(self.succ)
+        self.curve_cont_r.setData(self.cont_r)
+        self.curve_cont_l.setData(self.cont_l)
         self.curve_rewa.setData(self.rs)
 
         self.curve_currq_r.setData(self.currq_r)

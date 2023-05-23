@@ -1,11 +1,9 @@
 import mujoco
 import numpy as np
-import xml.etree.ElementTree as ET
 
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
-from gymnasium.envs.mujoco.mujoco_rendering import WindowViewer
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -26,18 +24,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 100,
     }
 
-    INITIAL_OBJECT_POS = np.array([0,0,0.67])
-
-    def __init__(self, ftheta=0.01, fgoal_range=[0.05, 0.6], **kwargs):
-        self.ftheta = ftheta    # threshold for contact/no contact
-        self.fgoal_range = fgoal_range # sampling range for fgoal
-
+    def __init__(self, model_path, observation_space, **kwargs):
         utils.EzPickle.__init__(self, **kwargs)
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64)
 
         MujocoEnv.__init__(
             self,
-            model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
+            model_path=model_path,
             frame_skip=5,
             observation_space=observation_space,
             default_camera_config=DEFAULT_CAMERA_CONFIG,
@@ -90,45 +82,29 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             self.data.joint("gripper_right_finger_joint").qacc[0]
         ])
 
-        # forces
-        self.forces = np.array([
-            self.data.sensor("left_touch_sensor").data[0],
-            self.data.sensor("right_touch_sensor").data[0],
-        ])
-        self.in_contact = self.forces > self.ftheta
-
-        # object state
-        self.objv = np.linalg.norm(self.data.joint("object_joint").qvel[:3])
-        self.objw = np.linalg.norm(self.data.joint("object_joint").qvel[3:])
-
     def _get_obs(self):
         """ concatenate internal state as observation
         """
         return np.concatenate([
                 self.q, 
-                self.qdot, 
-                self.forces, 
-                self.in_contact, 
-                [self.objv, self.objw]
+                self.qdot,
+                self.qacc
             ])
+
+    def _get_reward(self):
+        raise NotImplementedError
+    
+    def _is_done(self):
+        raise NotImplementedError
+    
+    def _reset_model(self):
+        raise NotImplementedError
 
     def reset_model(self):
         """ reset data, set joints to initial positions and randomize
         """
-        xmlmodel = ET.parse(self.fullpath)
-        root = xmlmodel.getroot()
 
-        #-----------------------------
-        # random object start 
-
-        object_pos = self.INITIAL_OBJECT_POS.copy()
-        object_pos[1] = round(np.random.uniform(-0.03, 0.03), 3)
-
-        obj = root.findall(".//body[@name='object']")[0]
-        obj.attrib['pos'] = ' '.join(map(str, object_pos))
-
-        # create model from modified XML and set vis parameters
-        self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
+        self.model = self._reset_model()
         self.model.vis.global_.offwidth = self.width
         self.model.vis.global_.offheight = self.height
 
@@ -136,9 +112,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.data  = mujoco.MjData(self.model)
         self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = 0.045
         self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = 0.045
-
-        # sample goal force
-        self.fgoal = round(np.random.uniform(*[0.05, 0.6]), 3)
 
         # update renderer's pointers, otherwise scene will be empty
         self.mujoco_renderer.model = self.model
@@ -172,15 +145,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # update internal state variables
         self._update_state()
-
-        # calculate reward
-        fdelta = self.fgoal - np.sum(self.forces)
-        fdelta = -np.abs(fdelta) # abs: same sign for overshooting forces and too little force; - penalize differences from fgoal
         
         return (
             self._get_obs(),
-            fdelta,
-            False,  # terminated
+            self._get_reward(),
+            self._is_done(),  # terminated
             False,  # truncated
             {},     # info
         )
+    
