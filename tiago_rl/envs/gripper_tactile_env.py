@@ -13,6 +13,7 @@ class GripperTactileEnv(GripperEnv):
     def __init__(self, ftheta=0.08, fgoal_range=[0.05, 0.6], **kwargs):
         self.ftheta = ftheta    # threshold for contact/no contact
         self.fgoal_range = fgoal_range # sampling range for fgoal
+        self.obj_pos_range = [-0.03, 0.03]
 
         observation_space = Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float64)
 
@@ -69,13 +70,13 @@ class GripperTactileEnv(GripperEnv):
         # random object start 
 
         object_pos = self.INITIAL_OBJECT_POS.copy()
-        object_pos[1] = round(np.random.uniform(-0.03, 0.03), 3)
+        object_pos[1] = round(np.random.uniform(*self.obj_pos_range, 3))
 
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, object_pos))
 
         # sample goal force
-        self.fgoal = round(np.random.uniform(*[0.05, 0.6]), 3)
+        self.fgoal = round(np.random.uniform(*self.fgoal_range), 3)
 
         # create model from modified XML
         return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))

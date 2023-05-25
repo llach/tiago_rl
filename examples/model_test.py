@@ -2,7 +2,7 @@ import numpy as np
 np.set_printoptions(suppress=True, precision=3)
 
 from tiago_rl.envs import GripperTactileEnv
-from tiago_rl.misc.load_cell_vis import LoadCellVisualiser
+from tiago_rl.misc.tactile_vis import LoadCellVisualiser
 
 env = GripperTactileEnv(render_mode="human")
 vis = LoadCellVisualiser(env)

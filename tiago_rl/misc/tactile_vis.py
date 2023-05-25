@@ -7,7 +7,7 @@ import pyqtgraph as pg
 import platform
 
 
-class LoadCellVisualiser:
+class TactileVis:
 
     def __init__(self, env):
         # store reference to environment

@@ -1,6 +1,7 @@
 import mujoco
 import numpy as np
 
+from tiago_rl import safe_rescale
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
@@ -49,8 +50,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ torso joint is ignored, this env is for gripper behavior only
         """
         self.action_space = Box(
-            low  = np.array([0.0, 0.0]), 
-            high = np.array([0.045, 0.045]), 
+            low  = np.array([-1, -1]), 
+            high = np.array([1, 1]), 
             dtype=np.float32
         )
         return self.action_space
@@ -58,6 +59,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def _make_action(self, ain):
         """ creates full `data.ctrl`-compatible array even though some joints are not actuated 
         """
+        ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
+
         aout = np.zeros_like(self.data.ctrl)
         aout[self.data.actuator("gripper_left_finger_joint").id]  = ain[0]
         aout[self.data.actuator("gripper_right_finger_joint").id] = ain[1]
@@ -86,9 +89,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ concatenate internal state as observation
         """
         return np.concatenate([
-                self.q, 
-                self.qdot,
-                self.qacc
+                safe_rescale(self.q,    [0.0,  0.045], [-1,1]), 
+                safe_rescale(self.qdot, [-0.01, 0.02], [-1,1])
             ])
 
     def _get_reward(self):
