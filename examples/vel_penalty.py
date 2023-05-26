@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 def penv(v, vmax, alpha=6):
     vnorm = np.clip(np.abs(v), 0, vmax)/vmax
+    return vnorm
     return np.e**(alpha*((vnorm-1)))
 
 

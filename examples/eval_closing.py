@@ -45,7 +45,7 @@ agent = agent.load("/tmp/continuous/best_model.zip")
 
 pos_model = PosModel()
 
-goals = np.round(np.linspace(0.0, 0.045, 50), 4)
+goals = np.round(np.linspace(0.0, 0.045, 50), 4)#[::-1]
 rl_rewards = deterministic_eval(env, agent, vis, goals)
 oracle_rewards = deterministic_eval(env, pos_model, vis, goals)
 
@@ -56,10 +56,11 @@ plt.title("GripperPosEnv - continuous r(t)")
 plt.xlabel("goal position")
 plt.ylabel("cumulative episode reward")
 
-plt.scatter(goals, rl_rewards, label="π")
-plt.scatter(goals, oracle_rewards, label="Oracle")
+plt.scatter(goals, rl_rewards, label=f"π {np.mean(rl_rewards):.0f}±{np.std(rl_rewards):.1f}")
+plt.scatter(goals, oracle_rewards, label=f"Oracle{np.mean(oracle_rewards):.0f}±{np.std(oracle_rewards):.1f}")
 
 plt.ylim(0, 1.1*np.max([rl_rewards, oracle_rewards]))
+# plt.ylim(0, 1.1*np.max([oracle_rewards]))
 plt.legend()
 plt.tight_layout()
 plt.show()

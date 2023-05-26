@@ -20,7 +20,7 @@ os.makedirs(log_dir, exist_ok=True)
 # Environment setup
 # ----------------------------
 env = GripperPosEnv()
-env = TimeLimit(env, max_episode_steps=200)
+env = TimeLimit(env, max_episode_steps=100)
 env = Monitor(env, log_dir)
 
 model = PPO('MlpPolicy', env, verbose=1)
