@@ -128,14 +128,14 @@ class GripperPosEnv(GripperEnv):
     
     def set_goal(self, g): self.qgoal = g
 
-    def step(self, action):
-        obs, reward, terminated, truncated, info = super().step(action)
 
-        # if both q deltas are smaller then the deadband, in_band counter is raised by one
-        # qdelta = np.abs(self.qgoal - self.q)
-        # if np.all(qdelta<self.eps) or self.in_band>0:
-        #     self.in_band += 1
+    # def step(self, action):
+    #     obs, reward, terminated, truncated, info = super().step(action)
 
-        terminated = terminated #or self.in_band >= self.max_steps
-        return obs, reward, terminated, truncated, info
+    #     # if both q deltas are smaller then the deadband, in_band counter is raised by one
+    #     if np.all(self.q_deltas<self.eps) or self.in_band>0:
+    #         self.in_band += 1
+
+    #     terminated = terminated or self.in_band >= self.max_steps
+    #     return obs, reward, terminated, truncated, info
 
