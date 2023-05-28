@@ -9,16 +9,14 @@ from tiago_rl import safe_rescale
 
 class GripperPosEnv(GripperEnv):
 
-    def __init__(self, max_steps=50, vmax=0.2, valpha=6, eps=0.0005, **kwargs):
+    def __init__(self, max_steps=50, eps=0.0005, **kwargs):
         self.eps = eps              # radius ε for rewards with fixed ε
-        self.vmax = vmax            # maximum joint velocity
-        self.valpha = valpha        # scaling factor in exponent of velocity penalty
         self.max_steps = max_steps  # #steps to terminate after  
 
         self.in_band        = 0             # number of steps since :first touch"
         self.qgoal_range    = [0.0, 0.045]
 
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float64)
+        observation_space = Box(low=-1, high=1, shape=(6,), dtype=np.float64)
 
         GripperEnv.__init__(
             self,
@@ -37,9 +35,9 @@ class GripperPosEnv(GripperEnv):
         """ concatenate internal state as observation
         """ 
         return np.concatenate([
-            safe_rescale(self.q, [0.0, 0.045], [-1,1]),
-            safe_rescale(self.q_deltas, [-0.045, 0.045], [-1,1]),
-            safe_rescale(self.qdot, [-self.vmax, self.vmax], [-1,1]),
+            safe_rescale(self.q, [0.0, 0.045]),
+            safe_rescale(self.q_deltas, [-0.045, 0.045]),
+            safe_rescale(self.qdot, [-self.vmax, self.vmax]),
         ])
     
     # # variant I) continuous reward - no restrictions
@@ -89,14 +87,11 @@ class GripperPosEnv(GripperEnv):
     
     # IV.2) no ε-env, linear velocity penalty
     def _get_reward(self):
-        vnorm    = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
-        vpenalty = np.sum(vnorm)
-
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
         deltaq = np.abs(self.qgoal - self.q)
         posreward = np.sum(1-(deltaq/delta))
 
-        return posreward - vpenalty
+        return posreward - self._qdot_penalty()
     
     def _is_done(self): return False
 
@@ -106,7 +101,7 @@ class GripperPosEnv(GripperEnv):
         xmlmodel = ET.parse(self.fullpath)
         root = xmlmodel.getroot()
 
-        # random object start 
+        # remove object from scene
         wb = root.findall(".//worldbody")[0]
         obj = root.findall(".//body[@name='object']")[0]
         wb.remove(obj)
@@ -127,7 +122,6 @@ class GripperPosEnv(GripperEnv):
         return obs
     
     def set_goal(self, g): self.qgoal = g
-
 
     # def step(self, action):
     #     obs, reward, terminated, truncated, info = super().step(action)

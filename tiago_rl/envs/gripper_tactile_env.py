@@ -3,19 +3,22 @@ import numpy as np
 import xml.etree.ElementTree as ET
 
 from gymnasium.spaces import Box
-from .gripper_env import GripperEnv
+
+from tiago_rl import safe_rescale, total_contact_force
+from tiago_rl.envs import GripperEnv
 
 
 class GripperTactileEnv(GripperEnv):
 
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, ftheta=0.08, fgoal_range=[0.05, 0.6], **kwargs):
-        self.ftheta = ftheta    # threshold for contact/no contact
-        self.fgoal_range = fgoal_range # sampling range for fgoal
-        self.obj_pos_range = [-0.03, 0.03]
+    def __init__(self, ftheta=0.08, fgoal_range=[0.05, 0.5], fmax=0.6, obj_pos_range=[-0.03, 0.03], **kwargs):
+        self.fmax = fmax                # maximum force
+        self.ftheta = ftheta            # threshold for contact/no contact
+        self.fgoal_range = fgoal_range  # sampling range for fgoal
+        self.obj_pos_range = obj_pos_range
 
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float64)
+        observation_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
 
         GripperEnv.__init__(
             self,
@@ -31,8 +34,11 @@ class GripperTactileEnv(GripperEnv):
 
         # forces
         self.forces = np.array([
-            self.data.sensor("left_touch_sensor").data[0],
-            self.data.sensor("right_touch_sensor").data[0],
+            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "left_finger_bb")[0])),
+            0
+            # total_contact_force(self.model, self.data, "object", "right_finger_bb")[0][2]
+            # self.data.sensor("left_touch_sensor").data[0],
+            # self.data.sensor("right_touch_sensor").data[0],
         ])
         self.force_deltas = self.fgoal - self.forces
         self.in_contact = self.forces > self.ftheta
@@ -46,17 +52,17 @@ class GripperTactileEnv(GripperEnv):
         """ 
         return np.concatenate([
                 super()._get_obs(),
-                self.forces, 
-                self.force_deltas,
-                self.in_contact, 
-                [self.objv, self.objw]
+                safe_rescale(self.forces, [0, self.fmax]), 
+                safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]),
             ])
 
     def _get_reward(self):
-        fdelta = np.abs(self.fgoal - np.sum(self.forces))
-    
-        if fdelta>self.ftheta: return 0 
-        return np.e**(5*(((self.ftheta-fdelta)/self.ftheta)-1))
+        fdelta = np.abs(self.fgoal - self.forces)
+        fdelta = np.clip(fdelta, 0, self.fgoal)
+
+        rforce = np.sum(1-(fdelta/self.fgoal))
+
+        return rforce #- self._qdot_penalty()
     
     def _is_done(self): return False
 
@@ -69,8 +75,8 @@ class GripperTactileEnv(GripperEnv):
         #-----------------------------
         # random object start 
 
-        object_pos = self.INITIAL_OBJECT_POS.copy()
-        object_pos[1] = round(np.random.uniform(*self.obj_pos_range, 3))
+        object_pos    = self.INITIAL_OBJECT_POS.copy()
+        object_pos[1] = round(np.random.uniform(*self.obj_pos_range), 3)
 
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, object_pos))
@@ -80,3 +86,5 @@ class GripperTactileEnv(GripperEnv):
 
         # create model from modified XML
         return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
+
+    def set_goal(self, x): self.fgoal = x

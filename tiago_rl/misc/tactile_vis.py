@@ -1,10 +1,9 @@
+import platform
 import numpy as np
-
-from pyqtgraph.Qt import QtGui, QtCore
-from PyQt6 import QtWidgets 
 import pyqtgraph as pg
 
-import platform
+from PyQt6 import QtWidgets 
+from tiago_rl import safe_rescale
 
 
 class TactileVis:
@@ -206,6 +205,7 @@ class TactileVis:
 
     def update_plot(self, action, reward):
         self.t += 1
+        action = safe_rescale(action, [-1,1], [0,0.045])
 
         # store new data
         self.raw_l.append(self.env.forces[0])
