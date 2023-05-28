@@ -10,7 +10,10 @@ from tiago_rl.envs import GripperEnv
 
 class GripperTactileEnv(GripperEnv):
 
+    SOLREF = [0.02, 1]
+    SOLIMP = [0, 0.95, 0.001, 0.5, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
+
 
     def __init__(self, ftheta=0.08, fgoal_range=[0.05, 0.5], fmax=0.6, obj_pos_range=[-0.03, 0.03], **kwargs):
         self.fmax = fmax                # maximum force
@@ -19,6 +22,10 @@ class GripperTactileEnv(GripperEnv):
         self.obj_pos_range = obj_pos_range
 
         observation_space = Box(low=-1, high=1, shape=(8,), dtype=np.float64)
+
+        # solver parameters that control object deformation and contact force behavior
+        self.solref = self.SOLREF
+        self.solimp = self.SOLIMP
 
         GripperEnv.__init__(
             self,
@@ -79,7 +86,10 @@ class GripperTactileEnv(GripperEnv):
         object_pos[1] = round(np.random.uniform(*self.obj_pos_range), 3)
 
         obj = root.findall(".//body[@name='object']")[0]
-        obj.attrib['pos'] = ' '.join(map(str, object_pos))
+        obj.attrib['pos']    = ' '.join(map(str, object_pos))
+
+        objgeom = obj.findall(".//geom")[0]
+        objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
 
         # sample goal force
         self.fgoal = round(np.random.uniform(*self.fgoal_range), 3)
@@ -88,3 +98,8 @@ class GripperTactileEnv(GripperEnv):
         return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
 
     def set_goal(self, x): self.fgoal = x
+    def set_solver_parameters(self, solimp=None, solref=None):
+        """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters
+        """
+        self.solimp = solimp
+        self.solref = solref
