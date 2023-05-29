@@ -11,11 +11,11 @@ from tiago_rl.envs import GripperEnv
 class GripperTactileEnv(GripperEnv):
 
     SOLREF = [0.02, 1]
-    SOLIMP = [0, 0.95, 0.001, 0.5, 2] # dmin is set to 0 to allow soft contacts
+    SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
 
-    def __init__(self, ftheta=0.08, fgoal_range=[0.05, 0.5], fmax=0.6, obj_pos_range=[-0.03, 0.03], **kwargs):
+    def __init__(self, ftheta=0.08, fgoal_range=[0.4, 0.6], fmax=0.75, obj_pos_range=[0, 0], **kwargs):
         self.fmax = fmax                # maximum force
         self.ftheta = ftheta            # threshold for contact/no contact
         self.fgoal_range = fgoal_range  # sampling range for fgoal
@@ -31,6 +31,7 @@ class GripperTactileEnv(GripperEnv):
             self,
             model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
+            qinit_range=[0.03, 0.03],
             **kwargs,
         )
 
@@ -42,10 +43,7 @@ class GripperTactileEnv(GripperEnv):
         # forces
         self.forces = np.array([
             np.sum(np.abs(total_contact_force(self.model, self.data, "object", "left_finger_bb")[0])),
-            0
-            # total_contact_force(self.model, self.data, "object", "right_finger_bb")[0][2]
-            # self.data.sensor("left_touch_sensor").data[0],
-            # self.data.sensor("right_touch_sensor").data[0],
+            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "right_finger_bb")[0]))
         ])
         self.force_deltas = self.fgoal - self.forces
         self.in_contact = self.forces > self.ftheta

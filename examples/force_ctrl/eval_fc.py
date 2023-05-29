@@ -45,7 +45,8 @@ agent = agent.load("/tmp/tactile/best_model.zip")
 
 pos_model = PosModel()
 
-goals = np.round(np.linspace(0.05, 0.5, 50), 4)[::-1]
+goals = np.round(np.linspace(0.55, 0.6, 10), 4)#[::-1]
+# goals = 10*[0.6]
 rl_rewards = deterministic_eval(env, agent, vis, goals)
 # oracle_rewards = deterministic_eval(env, pos_model, vis, goals)
 

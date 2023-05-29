@@ -11,10 +11,16 @@ from tiago_rl.misc import TactileVis
 with_vis = 0
 
 steps  = 100
+
+sidx   = 4
 trials = 10
-vrange = [0.001, 0.015]
-values = np.linspace(*vrange, trials)
-paramname="width"
+# vrange = [0.01, 0.99]
+# values = np.linspace(*vrange, trials)
+
+# values = np.arange(1,6)
+values = 10*[2]
+trials = len(values)
+paramname="power"
 
 env = GripperTactileEnv(
     obj_pos_range=[0,0],
@@ -31,7 +37,7 @@ forces = np.zeros((trials, steps))
 
 for i in range(trials):
     solimp = env.SOLIMP
-    solimp[2] = values[i]
+    solimp[sidx] = values[i]
     env.set_solver_parameters(solimp=solimp)
     env.reset()
     if vis: vis.reset()
@@ -42,11 +48,13 @@ for i in range(trials):
             [0, 0.045],
             [-1,1]
         )
+        action=[-1,-1]
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
 
         forces[i,j]=env.forces[0]
 env.close()
+print("fmax", np.max(forces))
 
 plt.figure(figsize=(9,6))
 for v, ftraj in zip(values, forces):
