@@ -1,5 +1,42 @@
 import pyqtgraph as pg
 
+from PyQt6 import QtWidgets 
+
+class VisBase:
+
+    def __init__(self, env, title, windim=[1000, 600]):
+        # store reference to environment
+        self.env = env
+
+        # create QT Application
+        self.app = QtWidgets.QApplication([])
+
+        # configure window
+        self.win = pg.GraphicsLayoutWidget(show=True, )
+        self.win.resize(*windim)
+        self.win.setWindowTitle(title)
+
+        # enable antialiasing for prettier plots
+        pg.setConfigOptions(antialias=True)
+
+        # initialize counter
+        self.t = 0
+
+    def reset(self):
+        self.draw_goal()
+
+        for plot in self.all_plots:
+            if self.t == 0: break
+            plot.draw_line(
+                name=f"ep{self.t}", 
+                pos=self.t,
+                pen={'color': "#D3D3D3", 'width': 1.5},
+                    #  'style': QtCore.Qt.DotLine},
+                angle=90
+                )
+    
+    def draw_goal(self): raise NotImplementedError
+
 class PlotItemWrapper:
 
     def __init__(self, win: pg.GraphicsLayoutWidget, 

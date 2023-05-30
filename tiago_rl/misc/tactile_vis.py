@@ -1,40 +1,25 @@
 import platform
 import numpy as np
-import pyqtgraph as pg
 
-from PyQt6 import QtWidgets 
 from tiago_rl import safe_rescale
+from tiago_rl.misc import VisBase, PlotItemWrapper as PIWrapper
 
-from tiago_rl.misc import PlotItemWrapper as PIWrapper
 
-
-class TactileVis:
+class TactileVis(VisBase):
 
     def __init__(self, env):
-        # store reference to environment
-        self.env = env
-
-        # create QT Application
-        self.app = QtWidgets.QApplication([])
-
-        # configure window
-        self.win = pg.GraphicsLayoutWidget(show=True, )
-        self.win.resize(1000, 600)
-        self.win.setWindowTitle('Force Visualisation')
-
-        # enable antialiasing for prettier plots
-        pg.setConfigOptions(antialias=True)
-
-        # update counter
-        self.t = 0
-        self.neps = 0
+        VisBase.__init__(
+            self,
+            env=env,
+            title="Force Visualisation"
+        )
 
         # create plots and curves
         self.plt_force = PIWrapper(self.win, title="Contact Forces", pens=["r", "y"], yrange=[-0.05, 1.2*env.fmax])
         self.plt_cntct = PIWrapper(self.win, title="In Contact", pens=["r", "y"], yrange=[-0.05, 1.05], ticks=[0,1])
         
         # draw lines at threshold and goal force
-        self.draw_fgoal()
+        self.draw_goal()
         self.plt_force.draw_line(
                 name="ftheta",
                 pos=env.ftheta,
@@ -69,7 +54,7 @@ class TactileVis:
 
         self.all_plots = [self.plt_force, self.plt_cntct, self.plt_pos, self.plt_vel, self.plt_acc, self.plt_vobj, self.plt_r]
 
-    def draw_fgoal(self):
+    def draw_goal(self):
         fgoal = self.env.fgoal
         self.plt_force.draw_line(
             name="fgoal",
@@ -78,19 +63,6 @@ class TactileVis:
             pen={'color': "#00FF00"}
         )
         self.plt_force.draw_ticks([0, fgoal, self.env.fmax])
-
-    def reset(self):
-        self.draw_fgoal()
-
-        for plot in self.all_plots:
-            if self.t == 0: break
-            plot.draw_line(
-                name=f"ep{self.t}", 
-                pos=self.t,
-                pen={'color': "#D3D3D3", 'width': 1.5},
-                    #  'style': QtCore.Qt.DotLine},
-                angle=90
-                )
 
     def update_plot(self, action, reward):
         self.t += 1
