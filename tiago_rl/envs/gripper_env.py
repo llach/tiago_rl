@@ -114,14 +114,19 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ reset data, set joints to initial positions and randomize
         """
 
+        # initial joint positions need to be known before model reset in child env
+        self.qinit_l = round(np.random.uniform(*self.qinit_range), 3)
+        self.qinit_r = round(np.random.uniform(*self.qinit_range), 3)
+
         self.model = self._reset_model()
+
         self.model.vis.global_.offwidth = self.width
         self.model.vis.global_.offheight = self.height
 
         # load data, set starting joint values (open gripper)
         self.data  = mujoco.MjData(self.model)
-        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = round(np.random.uniform(*self.qinit_range), 3)
-        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = round(np.random.uniform(*self.qinit_range), 3)
+        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = self.qinit_l
+        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = self.qinit_r
 
         # update renderer's pointers, otherwise scene will be empty
         self.mujoco_renderer.model = self.model

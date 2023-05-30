@@ -5,7 +5,7 @@ from tiago_rl.envs import GripperTactileEnv
 from tiago_rl.models import PosModel
 from tiago_rl.misc import TactileVis
 
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, TD3
 from gymnasium.wrappers import TimeLimit
 import matplotlib.pyplot as plt
 
@@ -45,7 +45,7 @@ agent = agent.load("/tmp/tactile/best_model.zip")
 
 pos_model = PosModel()
 
-goals = np.round(np.linspace(0.55, 0.6, 10), 4)#[::-1]
+goals = np.round(np.linspace(0.3, 0.6, 10), 4)[::-1]
 # goals = 10*[0.6]
 rl_rewards = deterministic_eval(env, agent, vis, goals)
 # oracle_rewards = deterministic_eval(env, pos_model, vis, goals)

@@ -13,7 +13,7 @@ steps  = 100
 trials = 10
 
 env = GripperTactileEnv(
-    obj_pos_range=[0,0],
+    obj_pos_range=[-0.005,-0.005],
     **{"render_mode": "human"} if with_vis else {}
     )
 vis = TactileVis(env) if with_vis else None
@@ -34,5 +34,6 @@ for i in range(trials):
             [-1,1]
         )
         obs, r, _, _, _ = env.step(action)
+        print(r)
         if vis: vis.update_plot(action=action, reward=r)
 env.close()
