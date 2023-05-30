@@ -9,7 +9,7 @@ from tiago_rl.envs import GripperTactileEnv
 from tiago_rl.misc import TactileVis
 
 with_vis = 1
-steps  = 100
+steps  = 5
 trials = 10
 
 env = GripperTactileEnv(
@@ -24,7 +24,7 @@ qd = safe_rescale(qdelta, [0,0.045], [-1,1])
 
 for i in range(trials):
     env.reset()
-    env.set_goal(0.6)    
+    # env.set_goal(0.6)    
     if vis: vis.reset()
 
     for j in range(steps):
@@ -34,6 +34,5 @@ for i in range(trials):
             [-1,1]
         )
         obs, r, _, _, _ = env.step(action)
-        print(r)
         if vis: vis.update_plot(action=action, reward=r)
 env.close()

@@ -16,7 +16,7 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, ftheta=0.05, fgoal_range=[0.4, 0.6], fmax=0.75, obj_pos_range=[0, 0], beta=0.6, gamma=1.0, **kwargs):
+    def __init__(self, ftheta=0.05, fgoal_range=[0.4, 0.6], fmax=0.85, obj_pos_range=[0, 0], beta=0.6, gamma=1.0, **kwargs):
         self.fmax = fmax                # maximum force
         self.ftheta = ftheta            # threshold for contact/no contact
         self.fgoal_range = fgoal_range  # sampling range for fgoal
@@ -72,6 +72,18 @@ class GripperTactileEnv(GripperEnv):
         dl = 1-np.clip(self.q[0]-self.qo_l, 0, self.doq_l)/self.doq_l
         dr = 1-np.clip(self.q[0]-self.qo_r, 0, self.doq_r)/self.doq_r
         return self.gamma*(dl+dr)
+    
+    def _force_reward(self):
+        fdeltas = self.fgoal - self.forces
+        
+        rforce = 0
+        for fd in fdeltas: # TODO introduce high-reward band based on noise parameter
+            if fd < -self.ftheta:
+                rforce += 1-(fd/self.fgoal_upper)
+            elif fd > self.ftheta:
+                rforce += 1-(fd/self.fgoal_lower)
+            else: rforce += 1
+        return rforce
 
     def _get_reward(self):
         fdelta = np.abs(self.fgoal - self.forces)
@@ -80,7 +92,6 @@ class GripperTactileEnv(GripperEnv):
         rforce = np.sum((1-(fdelta/self.fgoal)))
 
         return rforce + self._object_proximity_reward() + np.sum(self.in_contact) - self._qdot_penalty()
-        # return rforce + self._object_proximity_reward() - self._qdot_penalty()
     
     def _is_done(self): return False
 
@@ -92,7 +103,6 @@ class GripperTactileEnv(GripperEnv):
 
         #-----------------------------
         # random object start 
-
         self.oy = round(np.random.uniform(*self.obj_pos_range), 3) # object y position
         object_pos    = self.INITIAL_OBJECT_POS.copy()
         object_pos[1] = self.oy
@@ -107,8 +117,10 @@ class GripperTactileEnv(GripperEnv):
         self.ow = float(objgeom.attrib['size'].split(' ')[0])
         assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
-        # sample goal force
+        # sample goal force and calculate interval sizes above and below goal force
         self.fgoal = round(np.random.uniform(*self.fgoal_range), 3)
+        self.frange_upper = self.fmax - self.fgoal
+        self.frange_lower = self.fgoal # fmin is 0
 
         # signs for object q calculation
         sgnl = np.sign(self.oy)*self.QY_SGN_l
@@ -119,7 +131,7 @@ class GripperTactileEnv(GripperEnv):
         self.qo_l = sgnl*self.oy + self.ow 
         self.qo_r = sgnr*self.oy + self.ow
 
-        # distance between object and finger. TODO do we need to account for finger width?
+        # distance between object and finger (doesn't take finger width into account)
         self.doq_l = self.qinit_l-self.qo_l 
         self.doq_r = self.qinit_r-self.qo_r
 
