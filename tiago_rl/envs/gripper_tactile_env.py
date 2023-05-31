@@ -77,21 +77,20 @@ class GripperTactileEnv(GripperEnv):
         fdeltas = self.fgoal - self.forces
         
         rforce = 0
-        for fd in fdeltas: # TODO introduce high-reward band based on noise parameter
+        for fd in fdeltas:
             if fd < -self.ftheta:
-                rforce += 1-(fd/self.fgoal_upper)
+                rforce += 1-(np.abs(fd)/self.frange_upper)
             elif fd > self.ftheta:
-                rforce += 1-(fd/self.fgoal_lower)
-            else: rforce += 1
+                rforce += 1-(fd/self.frange_lower)
+            else: rforce += 1.5 # TODO additional reward for precision?
         return rforce
 
     def _get_reward(self):
-        fdelta = np.abs(self.fgoal - self.forces)
-        fdelta = np.clip(fdelta, 0, self.fgoal)
+        self.r_force   = self._force_reward()
+        self.r_obj_prx = self._object_proximity_reward()
+        self.r_qdot    = self._qdot_penalty()
 
-        rforce = np.sum((1-(fdelta/self.fgoal)))
-
-        return rforce + self._object_proximity_reward() + np.sum(self.in_contact) - self._qdot_penalty()
+        return self.r_force + self.r_obj_prx + np.sum(self.in_contact) - self.r_qdot
     
     def _is_done(self): return False
 
