@@ -9,14 +9,14 @@ with_vis = 1
 steps  = 50
 trials = 10
 
-# env = GripperTactileEnv(
-#     obj_pos_range=[-0.005,-0.005],
-#     **{"render_mode": "human"} if with_vis else {}
-#     )
-# vis = TactileVis(env) if with_vis else None
+env = GripperTactileEnv(
+    obj_pos_range=[-0.005,-0.005],
+    **{"render_mode": "human"} if with_vis else {}
+    )
+vis = TactileVis(env) if with_vis else None
 
-env = GripperPosEnv(**{"render_mode": "human"} if with_vis else {})
-vis = PosVis(env) if with_vis else None
+# env = GripperPosEnv(**{"render_mode": "human"} if with_vis else {})
+# vis = PosVis(env) if with_vis else None
 
 vdes = 0.15 # m/s
 qdelta = vdes*0.1
