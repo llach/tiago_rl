@@ -16,7 +16,7 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, ftheta=0.05, fgoal_range=[0.4, 0.6], fmax=0.85, obj_pos_range=[0, 0], alpha=1.0, beta=0.6, gamma=1.0, **kwargs):
+    def __init__(self, ftheta=0.05, fgoal_range=[0.5, 0.6], fmax=0.85, obj_pos_range=[0, 0], alpha=1.0, beta=1.0, gamma=1.0, **kwargs):
         self.fmax = fmax                # maximum force
         self.ftheta = ftheta            # threshold for contact/no contact
         self.fgoal_range = fgoal_range  # sampling range for fgoal
@@ -24,7 +24,7 @@ class GripperTactileEnv(GripperEnv):
         self.gamma = gamma
         self.obj_pos_range = obj_pos_range
 
-        observation_space = Box(low=-1, high=1, shape=(10,), dtype=np.float64)
+        observation_space = Box(low=-1, high=1, shape=(12,), dtype=np.float64)
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
@@ -75,23 +75,25 @@ class GripperTactileEnv(GripperEnv):
         return self.gamma*(dl+dr)
     
     def _force_reward(self):
-        fdeltas = self.fgoal - self.forces
+        deltaf = self.fgoal - self.forces
         
         rforce = 0
-        for fd in fdeltas:
-            if fd < -self.ftheta:
-                rforce += 1-(np.abs(fd)/self.frange_upper)
-            elif fd > self.ftheta:
-                rforce += 1-(fd/self.frange_lower)
-            else: rforce += 1.5 # TODO additional reward for precision?
+        for df in deltaf:
+            if df < -self.ftheta: # overshooting
+                rforcei = 1-2*(np.abs(df)/self.frange_upper)
+            elif df > self.ftheta:
+                rforcei = 1-(df/self.frange_lower)
+            else: rforcei = 1.1 # within goal-band 
+            rforce += rforcei
         return self.alpha*rforce
 
     def _get_reward(self):
         self.r_force   = self._force_reward()
         self.r_obj_prx = self._object_proximity_reward()
         self.r_qdot    = self._qdot_penalty()
+        self.r_qacc    = self._qacc_penalty()
 
-        return self.r_force + self.r_obj_prx + np.sum(self.in_contact) - self.r_qdot
+        return self.r_force + self.r_obj_prx + np.sum(self.in_contact) - self.r_qdot - self.r_qacc
     
     def _is_done(self): return False
 
@@ -117,10 +119,8 @@ class GripperTactileEnv(GripperEnv):
         self.ow = float(objgeom.attrib['size'].split(' ')[0])
         assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
-        # sample goal force and calculate interval sizes above and below goal force
-        self.fgoal = round(np.random.uniform(*self.fgoal_range), 3)
-        self.frange_upper = self.fmax - self.fgoal
-        self.frange_lower = self.fgoal # fmin is 0
+        # sample goal force
+        self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         # signs for object q calculation
         sgnl = np.sign(self.oy)*self.QY_SGN_l
@@ -138,7 +138,12 @@ class GripperTactileEnv(GripperEnv):
         # create model from modified XML
         return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
 
-    def set_goal(self, x): self.fgoal = x
+    def set_goal(self, x): 
+        # set goal force and calculate interval sizes above and below goal force
+        self.fgoal = x
+        self.frange_upper = self.fmax - self.fgoal
+        self.frange_lower = self.fgoal # fmin is 0
+
     def set_solver_parameters(self, solimp=None, solref=None):
         """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters
         """

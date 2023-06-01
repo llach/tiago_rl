@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 
-from PyQt6 import QtWidgets 
+from PyQt6 import QtWidgets, QtCore
 
 class VisBase:
 
@@ -30,8 +30,7 @@ class VisBase:
             plot.draw_line(
                 name=f"ep{self.t}", 
                 pos=self.t,
-                pen={'color': "#D3D3D3", 'width': 1.5},
-                    #  'style': QtCore.Qt.DotLine},
+                pen=dict(color="#D3D3D3", width=1.5, style=QtCore.Qt.PenStyle.DashLine),
                 angle=90
                 )
     

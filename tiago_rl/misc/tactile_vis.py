@@ -1,6 +1,7 @@
 import platform
 import numpy as np
 
+from PyQt6 import QtCore
 from tiago_rl import safe_rescale
 from tiago_rl.misc import VisBase, PlotItemWrapper as PIWrapper
 
@@ -31,7 +32,7 @@ class TactileVis(VisBase):
         self.plt_pos = PIWrapper(self.win, title="Joint Positions", pens=["r", "y", "c", "b"], yrange=[-0.005, 0.05], ticks=[0.045, 0.02, 0.0])
 
         vmax = self.env.vmax
-        self.plt_vel = PIWrapper(self.win, title="Joint Velocities", pens=["r", "y"], yrange=[-1.3*vmax, 1.3*vmax], ticks=[-vmax, vmax])
+        self.plt_vel = PIWrapper(self.win, title="Joint Velocities", pens=["r", "y"], yrange=[-1.2*vmax, 1.2*vmax], ticks=[-vmax, vmax])
         self.plt_vel.draw_line(
             name="upper_limit",
             pos=vmax,
@@ -45,8 +46,20 @@ class TactileVis(VisBase):
 
         self.win.nextRow()
 
-        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"], yrange=[-6.2, 6.2], ticks=[-4.0, 0, 4.0])
+        amax = self.env.amax
+        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"], yrange=[-1.2*amax, 1.2*amax], ticks=[-amax, 0, amax])
         self.plt_vobj = PIWrapper(self.win, title="Object Velocity", pens=["m", "b"], yrange=[-0.02, 0.8])
+
+        self.plt_acc.draw_line(
+            name="upper_limit",
+            pos=amax,
+            angle=0
+        )
+        self.plt_acc.draw_line(
+            name="lower_limit",
+            pos=-amax,
+            angle=0
+        )
 
         self.win.nextRow()
 
@@ -56,7 +69,7 @@ class TactileVis(VisBase):
         self.win.nextRow()
 
         self.plt_r_obj_prx = PIWrapper(self.win, title="r_obj_prx", pens="b", yrange=[-0.1, 2.2], ticks=[0,2])
-        self.plt_r_qdot = PIWrapper(self.win, title="r_qdot", pens="r", yrange=[0.1, -2.2], ticks=[0,-2])
+        self.plt_r_qdot = PIWrapper(self.win, title="r_qdot & r_qacc", pens=["r", "c"], yrange=[0.1, -2.2], ticks=[0,-2])
 
         self.all_plots = [
             self.plt_force, self.plt_cntct, 
@@ -67,13 +80,28 @@ class TactileVis(VisBase):
         ]
 
     def draw_goal(self):
-        fgoal = self.env.fgoal
+        fth    = self.env.ftheta
+        fgoal  = self.env.fgoal
+
         self.plt_force.draw_line(
             name="fgoal",
             pos=fgoal,
             angle=0,
-            pen={'color': "#00FF00"}
+            pen=dict(color="#00FF00", width=1)
         )
+        self.plt_force.draw_line(
+            name="noise_upper",
+            pos=fgoal+fth,
+            angle=0,
+            pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
+        )
+        self.plt_force.draw_line(
+            name="noise_lower",
+            pos=fgoal-fth,
+            angle=0,
+            pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
+        )
+
         self.plt_force.draw_ticks([0, fgoal, self.env.fmax])
 
     def update_plot(self, action, reward):
@@ -94,7 +122,7 @@ class TactileVis(VisBase):
         self.plt_r_force.update(self.env.r_force)
 
         self.plt_r_obj_prx.update(self.env.r_obj_prx)
-        self.plt_r_qdot.update(-self.env.r_qdot)
+        self.plt_r_qdot.update([-self.env.r_qdot, -self.env.r_qacc])
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux

@@ -19,7 +19,7 @@ os.makedirs(log_dir, exist_ok=True)
 
 # Environment setup
 # ----------------------------
-env = GripperTactileEnv(fgoal_range=[0.5, 0.6], alpha=1.0, beta=1.0)
+env = GripperTactileEnv(delta=2.0)
 env = TimeLimit(env, max_episode_steps=100)
 env = Monitor(env, log_dir)
 

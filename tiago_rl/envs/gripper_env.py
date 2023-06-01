@@ -25,10 +25,11 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 100,
     }
 
-    def __init__(self, model_path, observation_space, alpha=6, beta=1, vmax=0.2, qinit_range=[0.045, 0.045], **kwargs):
+    def __init__(self, model_path, observation_space, beta=1, delta=1.0, vmax=0.2, amax=3.0, qinit_range=[0.045, 0.045], **kwargs):
+        self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
-        self.alpha = alpha      # scaling factor in exponent of velocity penalty
         self.beta  = beta       # weight for velocity penalty 
+        self.delta = delta      # weight for acceleration penalty
         self.qinit_range = qinit_range
 
         utils.EzPickle.__init__(self, **kwargs)
@@ -94,12 +95,17 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """
         return np.concatenate([
                 safe_rescale(self.q,    [0.0,  0.045]), 
-                safe_rescale(self.qdot, [-0.01, 0.02])
+                safe_rescale(self.qdot, [-self.vmax, self.vmax]),
+                safe_rescale(self.qacc, [-self.amax, self.amax])
             ])
     
     def _qdot_penalty(self):
         vnorm = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
         return self.beta*np.sum(vnorm)
+    
+    def _qacc_penalty(self):
+        anorm = np.clip(np.abs(self.qacc), 0, self.amax)/self.amax
+        return self.delta*np.sum(anorm)
 
     def _get_reward(self):
         raise NotImplementedError

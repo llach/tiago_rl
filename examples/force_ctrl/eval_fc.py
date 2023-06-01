@@ -36,7 +36,7 @@ with_vis = 1
 
 # Environment setup
 # ----------------------------
-env = GripperTactileEnv(beta=1, **{"render_mode": "human"} if with_vis else {})
+env = GripperTactileEnv(delta=2, **{"render_mode": "human"} if with_vis else {})
 env = TimeLimit(env, max_episode_steps=100)
 vis = TactileVis(env) if with_vis else None
 
@@ -45,7 +45,7 @@ agent = agent.load("/tmp/tactile/best_model.zip")
 
 pos_model = PosModel()
 
-goals = np.round(np.linspace(0.3, 0.6, 10), 4)[::-1]
+goals = np.round(np.linspace(0.5, 0.6, 10), 4)[::-1]
 # goals = 10*[0.6]
 rl_rewards = deterministic_eval(env, agent, vis, goals)
 # oracle_rewards = deterministic_eval(env, pos_model, vis, goals)
