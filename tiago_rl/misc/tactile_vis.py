@@ -94,7 +94,7 @@ class TactileVis(VisBase):
         self.plt_r_force.update(self.env.r_force)
 
         self.plt_r_obj_prx.update(self.env.r_obj_prx)
-        self.plt_r_qdot.update(self.env.r_qdot)
+        self.plt_r_qdot.update(-self.env.r_qdot)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux

@@ -16,10 +16,11 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, ftheta=0.05, fgoal_range=[0.4, 0.6], fmax=0.85, obj_pos_range=[0, 0], beta=0.6, gamma=1.0, **kwargs):
+    def __init__(self, ftheta=0.05, fgoal_range=[0.4, 0.6], fmax=0.85, obj_pos_range=[0, 0], alpha=1.0, beta=0.6, gamma=1.0, **kwargs):
         self.fmax = fmax                # maximum force
         self.ftheta = ftheta            # threshold for contact/no contact
         self.fgoal_range = fgoal_range  # sampling range for fgoal
+        self.alpha = alpha
         self.gamma = gamma
         self.obj_pos_range = obj_pos_range
 
@@ -70,7 +71,7 @@ class GripperTactileEnv(GripperEnv):
         """
         # clipping the deltas at 0 will allow π to penetrate the object without penalty
         dl = 1-np.clip(self.q[0]-self.qo_l, 0, self.doq_l)/self.doq_l
-        dr = 1-np.clip(self.q[0]-self.qo_r, 0, self.doq_r)/self.doq_r
+        dr = 1-np.clip(self.q[1]-self.qo_r, 0, self.doq_r)/self.doq_r
         return self.gamma*(dl+dr)
     
     def _force_reward(self):
@@ -83,7 +84,7 @@ class GripperTactileEnv(GripperEnv):
             elif fd > self.ftheta:
                 rforce += 1-(fd/self.frange_lower)
             else: rforce += 1.5 # TODO additional reward for precision?
-        return rforce
+        return self.alpha*rforce
 
     def _get_reward(self):
         self.r_force   = self._force_reward()

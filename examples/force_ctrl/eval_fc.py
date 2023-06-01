@@ -36,7 +36,7 @@ with_vis = 1
 
 # Environment setup
 # ----------------------------
-env = GripperTactileEnv(**{"render_mode": "human"} if with_vis else {})
+env = GripperTactileEnv(beta=1, **{"render_mode": "human"} if with_vis else {})
 env = TimeLimit(env, max_episode_steps=100)
 vis = TactileVis(env) if with_vis else None
 
