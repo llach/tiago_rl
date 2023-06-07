@@ -80,7 +80,7 @@ class GripperTactileEnv(GripperEnv):
         rforce = 0
         for df in deltaf:
             if df < -self.ftheta: # overshooting
-                rforcei = 1-2*(np.abs(df)/self.frange_upper)
+                rforcei = 1-10*(np.abs(df)/self.frange_upper)
             elif df > self.ftheta:
                 rforcei = 1-(df/self.frange_lower)
             else: rforcei = 1.1 # within goal-band 

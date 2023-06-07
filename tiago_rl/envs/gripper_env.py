@@ -22,10 +22,10 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             "rgb_array",
             "depth_array",
         ],
-        "render_fps": 100,
+        "render_fps": 50,
     }
 
-    def __init__(self, model_path, observation_space, beta=1, delta=1.0, vmax=0.2, amax=3.0, qinit_range=[0.045, 0.045], **kwargs):
+    def __init__(self, model_path, observation_space, beta=1, delta=1.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.beta  = beta       # weight for velocity penalty 
@@ -36,7 +36,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         MujocoEnv.__init__(
             self,
             model_path=model_path,
-            frame_skip=5,
+            frame_skip=10,
             observation_space=observation_space,
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,

@@ -19,18 +19,19 @@ os.makedirs(log_dir, exist_ok=True)
 
 # Environment setup
 # ----------------------------
-env = GripperTactileEnv(delta=2.0)
+env = GripperTactileEnv(delta=2.0, fgoal_range=[0.3, 0.6])
 env = TimeLimit(env, max_episode_steps=100)
 env = Monitor(env, log_dir)
 
 model = PPO('MlpPolicy', env, verbose=1)
-callback = SaveOnBestTrainingRewardCallback(env=env,
-                                            check_freq=2000,
-                                            total_steps=timesteps,
-                                            save_path=log_dir,
-                                            step_offset=1e3,
-                                            mean_n=100
-                                            )
+callback = SaveOnBestTrainingRewardCallback(
+    env=env,
+    check_freq=2000,
+    total_steps=timesteps,
+    save_path=log_dir,
+    step_offset=1e3,
+    mean_n=100
+)
 
 # Train the agent
 model.learn(total_timesteps=int(timesteps), callback=callback)
