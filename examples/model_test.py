@@ -1,5 +1,5 @@
 import numpy as np
-np.set_printoptions(suppress=True, precision=3)
+np.set_printoptions(suppress=True, precision=5)
 
 from tiago_rl import safe_rescale
 from tiago_rl.envs import GripperTactileEnv, GripperPosEnv
@@ -18,8 +18,8 @@ vis = TactileVis(env) if with_vis else None
 # env = GripperPosEnv(**{"render_mode": "human"} if with_vis else {})
 # vis = PosVis(env) if with_vis else None
 
-vdes = 0.15 # m/s
-qdelta = vdes*0.1
+vdes = 0.02 # m/s
+qdelta = vdes*env.dt
 qd = safe_rescale(qdelta, [0,0.045], [-1,1])
 
 for i in range(trials):

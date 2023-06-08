@@ -42,6 +42,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             **kwargs,
         )
 
+        # maximum position delta per timestep to not surpass max velocity
+        self.dq_max = self.vmax*self.dt
+
         # reload the model with environment randomization
         self.reset_model()
     
@@ -62,10 +65,18 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         return self.action_space
     
     def _make_action(self, ain):
-        """ creates full `data.ctrl`-compatible array even though some joints are not actuated 
+        """ 
+        * limits joint to vmax by contraining the maximum position delta applied
+        * creates full `data.ctrl`-compatible array even though some joints are not actuated 
         """
+        # rescale to action range
         ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
 
+        # velocity limiting
+        dq = np.clip(self.q - ain, -self.dq_max, self.dq_max)
+        ain = self.q-dq
+
+        # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
         aout[self.data.actuator("gripper_left_finger_joint").id]  = ain[0]
         aout[self.data.actuator("gripper_right_finger_joint").id] = ain[1]
