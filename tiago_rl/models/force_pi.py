@@ -68,7 +68,7 @@ class ForcePI:
                 delta_f = self.fgoal - f
                 delta_q = delta_f / self.k
 
-                # integrate error TODO clip?
+                # integrate error TODO clip error integral?
                 self.error_integral += delta_q * self.dt
                 delta_q_ = self.Kp * delta_q + self.Ki * self.error_integral
 
@@ -76,7 +76,7 @@ class ForcePI:
 
         # if self.phase == ControllerPhase.POSITION_CTRL:
         #     print("fc", delta_qs)
-        # elif self.phase == ControllerPhase.FORCE_CTRL:
+        # if self.phase == ControllerPhase.FORCE_CTRL:
         #     print("fc", delta_qs)
 
         return np.clip(q+delta_qs, *self.q_limits)

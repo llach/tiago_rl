@@ -7,7 +7,7 @@ from tiago_rl.models import ForcePI
 from tiago_rl.misc import PIVis
 
 with_vis = 1
-steps  = 200
+steps  = 250
 trials = 5
 
 
@@ -15,8 +15,8 @@ env = GripperTactileEnv(
     obj_pos_range=[-0.008,0.008],
     fgoal_range=[0.2, 0.6],
     **{"render_mode": "human"} if with_vis else {}
-    )
-fc = ForcePI(env.dt, env.fgoal, env.ftheta, Kp=.5, Ki=3.1, k=160)
+)
+fc = ForcePI(env.dt, env.fgoal, env.ftheta, Kp=1.5, Ki=3.1, k=160)
 vis = PIVis(env) if with_vis else None
 
 for i in range(trials):

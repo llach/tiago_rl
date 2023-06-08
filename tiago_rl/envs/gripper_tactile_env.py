@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 from gymnasium.spaces import Box
 
-from tiago_rl import safe_rescale, total_contact_force
+from tiago_rl import safe_rescale
 from tiago_rl.envs import GripperEnv
 
 
@@ -16,9 +16,7 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, ftheta=0.05, fgoal_range=[0.5, 0.6], fmax=0.85, obj_pos_range=[0, 0], alpha=1.0, beta=1.0, gamma=1.0, **kwargs):
-        self.fmax = fmax                # maximum force
-        self.ftheta = ftheta            # threshold for contact/no contact
+    def __init__(self, fgoal_range=[0.5, 0.6], obj_pos_range=[0, 0], alpha=1.0, beta=1.0, gamma=1.0, **kwargs):
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.alpha = alpha
         self.gamma = gamma
@@ -44,13 +42,8 @@ class GripperTactileEnv(GripperEnv):
         """
         super()._update_state()
 
-        # forces
-        self.forces = np.array([
-            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "left_finger_bb")[0])),
-            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "right_finger_bb")[0]))
-        ])
+        # force deltas to goal
         self.force_deltas = self.fgoal - self.forces
-        self.in_contact = self.forces > self.ftheta
 
         # object state
         self.objv = np.linalg.norm(self.data.joint("object_joint").qvel[:3])

@@ -6,8 +6,8 @@ from tiago_rl.envs import GripperTactileEnv, GripperPosEnv
 from tiago_rl.misc import TactileVis, PosVis
 
 with_vis = 1
-steps  = 50
-trials = 10
+steps  = 250
+trials = 5
 
 env = GripperTactileEnv(
     obj_pos_range=[-0.005,-0.005],
@@ -33,6 +33,6 @@ for i in range(trials):
             [0, 0.045],
             [-1,1]
         )
-        obs, r, _, _, _ = env.step(action)
+        obs, r, _, _, _ = env.step([-1,-1])
         if vis: vis.update_plot(action=action, reward=r)
 env.close()

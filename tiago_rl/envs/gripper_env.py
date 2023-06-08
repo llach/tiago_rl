@@ -1,7 +1,7 @@
 import mujoco
 import numpy as np
 
-from tiago_rl import safe_rescale
+from tiago_rl import safe_rescale, total_contact_force
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
@@ -25,11 +25,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, model_path, observation_space, beta=1, delta=1.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], **kwargs):
+    def __init__(self, model_path, observation_space, beta=1, delta=1.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
+        self.fmax = fmax        # maximum contact force
         self.beta  = beta       # weight for velocity penalty 
         self.delta = delta      # weight for acceleration penalty
+        self.ftheta = ftheta    # contact force noise threshold
         self.qinit_range = qinit_range
 
         utils.EzPickle.__init__(self, **kwargs)
@@ -71,10 +73,16 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """
         # rescale to action range
         ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
+        
+        # velocity limiting for free-space movements (i.e. for joints that are not in contact with the object)
+        dq = self.q - ain
+        dq_lim = np.clip(dq, -self.dq_max, self.dq_max)
 
-        # velocity limiting
-        dq = np.clip(self.q - ain, -self.dq_max, self.dq_max)
-        ain = self.q-dq
+        ain = np.where(
+            (np.abs(dq) > self.dq_max) & (~self.in_contact), 
+            self.q-dq_lim,
+            ain
+        )
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
@@ -87,6 +95,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ updates internal state variables that may be used as observations
         """
         ### update relevant robot state variables 
+
         # joint states
         self.q = np.array([
             self.data.joint("gripper_left_finger_joint").qpos[0],
@@ -100,6 +109,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             self.data.joint("gripper_left_finger_joint").qacc[0],
             self.data.joint("gripper_right_finger_joint").qacc[0]
         ])
+
+        # contact forces and binary in_contact state
+        self.forces = np.array([
+            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "left_finger_bb")[0])),
+            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "right_finger_bb")[0]))
+        ])
+        self.in_contact = self.forces > self.ftheta
 
     def _get_obs(self):
         """ concatenate internal state as observation
