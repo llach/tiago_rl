@@ -37,11 +37,11 @@ with_vis = 1
 # Environment setup
 # ----------------------------
 env = GripperTactileEnv(delta=2, **{"render_mode": "human"} if with_vis else {})
-env = TimeLimit(env, max_episode_steps=100)
+env = TimeLimit(env, max_episode_steps=250)
 vis = TactileVis(env) if with_vis else None
 
 agent = PPO('MlpPolicy', env, verbose=1)
-agent = agent.load("/tmp/tactile/best_model.zip")
+agent = agent.load("/tmp/tactile/best_model")
 
 pos_model = PosModel()
 

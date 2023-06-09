@@ -32,7 +32,6 @@ class GripperTactileEnv(GripperEnv):
             self,
             model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
-            qinit_range=[0.03, 0.03],
             beta=beta,
             **kwargs,
         )

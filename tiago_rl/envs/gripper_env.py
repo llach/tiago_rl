@@ -45,7 +45,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         )
 
         # maximum position delta per timestep to not surpass max velocity
-        self.dq_max = self.vmax*self.dt
+        self.dq_max = self.vmax*self.dt*5 # the 5 is needed to actually get to vmax
 
         # reload the model with environment randomization
         self.reset_model()
@@ -78,7 +78,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         dq = self.q - ain
         dq_lim = np.clip(dq, -self.dq_max, self.dq_max)
 
-        ain = np.where(
+        safe_ain = np.where(
             (np.abs(dq) > self.dq_max) & (~self.in_contact), 
             self.q-dq_lim,
             ain
@@ -86,8 +86,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
-        aout[self.data.actuator("gripper_left_finger_joint").id]  = ain[0]
-        aout[self.data.actuator("gripper_right_finger_joint").id] = ain[1]
+        aout[self.data.actuator("gripper_left_finger_joint").id]  = safe_ain[0]
+        aout[self.data.actuator("gripper_right_finger_joint").id] = safe_ain[1]
 
         return aout
     
