@@ -39,7 +39,7 @@ class ForcePI:
 
             # phase I: closing
             if np.abs(f) < self.ftheta and not self.joint_transition[i]:
-                delta_qs[i] = -self.closing_vel*self.dt
+                delta_qs[i] = -self.closing_vel*self.dt*5
             # phase II: contact acquisition → waiting for force-closure
             elif not self.joint_transition[i]:
                 self.phase = ControllerPhase.FORCE_CLOSURE
