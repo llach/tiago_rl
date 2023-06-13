@@ -13,17 +13,17 @@ from tiago_experiments import SaveOnBestTrainingRewardCallback
 from gymnasium.wrappers import TimeLimit
 
 # Create log dir
-timesteps = 5e5
+timesteps = 2e5
 log_dir = "/tmp/tactile/"
 os.makedirs(log_dir, exist_ok=True)
 
 # Environment setup
 # ----------------------------
-env = GripperTactileEnv(delta=2.0, fgoal_range=[0.3, 0.6])
+env = GripperTactileEnv(alpha=2, delta=2.0, fgoal_range=[0.3, 0.6])
 env = TimeLimit(env, max_episode_steps=250)
 env = Monitor(env, log_dir)
 
-model = PPO('MlpPolicy', env, verbose=1)
+model = TD3('MlpPolicy', env, verbose=1)
 callback = SaveOnBestTrainingRewardCallback(
     env=env,
     check_freq=2000,

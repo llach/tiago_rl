@@ -75,14 +75,15 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
         
         # velocity limiting for free-space movements (i.e. for joints that are not in contact with the object)
-        dq = self.q - ain
-        dq_lim = np.clip(dq, -self.dq_max, self.dq_max)
+        # dq = self.q - ain
+        # dq_lim = np.clip(dq, -self.dq_max, self.dq_max)
 
-        safe_ain = np.where(
-            (np.abs(dq) > self.dq_max) & (~self.in_contact), 
-            self.q-dq_lim,
-            ain
-        )
+        # safe_ain = np.where(
+        #     (np.abs(dq) > self.dq_max) & (~self.in_contact), 
+        #     self.q-dq_lim,
+        #     ain
+        # )
+        safe_ain = ain
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)

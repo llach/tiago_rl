@@ -1,6 +1,8 @@
 import numpy as np
 from enum import Enum
 
+from tiago_rl import safe_rescale
+
 class ControllerPhase(int, Enum):
     POSITION_CTRL=0
     FORCE_CLOSURE=1
@@ -8,8 +10,9 @@ class ControllerPhase(int, Enum):
 
 class ForcePI:
 
-    def __init__(self, dt, fgoal, ftheta, Kp=1.9, Ki=3.1, k=1600, closing_vel=0.02, q_limits=[0.0, 0.045]):
+    def __init__(self, dt, fmax, fgoal, ftheta, Kp=1.9, Ki=3.1, k=1600, closing_vel=0.02, q_limits=[0.0, 0.045]):
         self.dt = dt
+        self.fmax = fmax
         self.fgoal = fgoal
         self.ftheta = ftheta
         self.q_limits = q_limits
@@ -85,7 +88,8 @@ class ForcePI:
         """
         interface to be compatible with stable baselines' API
         """
-        q_t = obs[:2]
-        f_t = obs[2:]
-        
-        return self.get_q(q_t, f_t), {}
+        q_t = safe_rescale(obs[:2],  [-1,1], [0, 0.045])
+        f_t = safe_rescale(obs[6:8], [-1,1], [0, self.fmax])
+
+        qdes = self.get_q(q_t, f_t)
+        return safe_rescale(qdes, [0, 0.045]), {}

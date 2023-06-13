@@ -16,11 +16,11 @@ env = GripperTactileEnv(
     fgoal_range=[0.2, 0.6],
     **{"render_mode": "human"} if with_vis else {}
 )
-fc = ForcePI(env.dt, env.fgoal, env.ftheta, Kp=1.5, Ki=3.1, k=160)
+fc = ForcePI(env.dt, env.fmax, env.fgoal, env.ftheta, Kp=1.5, Ki=3.1, k=160)
 vis = PIVis(env) if with_vis else None
 
 for i in range(trials):
-    obs = env.reset()
+    obs, _ = env.reset()
     # env.set_goal(0.6)  
 
     fc.reset(env.fgoal)
@@ -28,10 +28,8 @@ for i in range(trials):
 
     cumr = 0
     for j in range(steps):
-        raw_action, _ = fc.predict(np.concatenate([
-            env.q, env.forces
-        ]))
-        action = safe_rescale(raw_action, [0, 0.045])
+        # action = fc.get_q(env.q, env.forces)
+        action, _ = fc.predict(obs)
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
